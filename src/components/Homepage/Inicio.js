@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import wpp from './images/wallpper.jpeg';
+import wppcel from './images/wallppercel.jpeg';
 import Loginform from '../login/Loginform';
 import './Inicio.css';
 
@@ -31,7 +32,7 @@ function Inicio() {
         <div
           className="justify-center items-center bg-fixed h-screen static"
           style={{
-            backgroundImage: `url(${wpp})`,
+            backgroundImage: `url(${wppcel})`,
             backgroundAttachment: 'fixed',
           }}
         >

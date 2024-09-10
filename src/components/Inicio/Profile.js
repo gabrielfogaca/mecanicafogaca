@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import f250 from './images/f250wpp.jpg';
+import f250cel from './images/f250wppcel.jpg';
 import ResponsiveDrawer from './Drawer.js';
 
 function getWindowSize() {
@@ -30,7 +31,7 @@ function Profile() {
         <div
           className="justify-center items-center bg-fixed h-screen static"
           style={{
-            backgroundImage: `url(${f250})`,
+            backgroundImage: `url(${f250cel})`,
             backgroundAttachment: 'fixed',
           }}
         >
