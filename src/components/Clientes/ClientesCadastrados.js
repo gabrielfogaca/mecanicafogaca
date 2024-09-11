@@ -64,7 +64,7 @@ const Cadastrados = () => {
                   {client.nomeCompleto}
                 </p>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  CPF: {client.cpf}
+                  CPF/CNPJ: {client.cpf}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Carro: {client.carro}

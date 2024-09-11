@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 
 const sronly = {
   width: '1px',
@@ -17,7 +16,7 @@ const NovaPeca = () => {
 
   return (
     <>
-      {/* NovaPeca toggle button */}
+      {/* Botão para abrir modal de cadastro */}
       <button
         onClick={toggleNovaPeca}
         className="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
@@ -26,7 +25,7 @@ const NovaPeca = () => {
         + Nova Peça
       </button>
 
-      {/* Main NovaPeca */}
+      {/* Modal de cadastro */}
       {isOpen && (
         <div
           tabIndex="-1"
@@ -34,9 +33,9 @@ const NovaPeca = () => {
           className="fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full h-[calc(100%-1rem)] max-h-full overflow-y-auto overflow-x-hidden"
         >
           <div className="relative p-4 w-full max-w-md max-h-full">
-            {/* NovaPeca content */}
+            {/* Conteúdo do modal */}
             <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
-              {/* NovaPeca header */}
+              {/* Cabeçalho do modal */}
               <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Cadastro de nova Peça
@@ -49,101 +48,70 @@ const NovaPeca = () => {
                   <span sx={sronly}>X</span>
                 </button>
               </div>
-              {/* NovaPeca body */}
+              {/* Corpo do modal */}
               <form className="p-4 md:p-5">
                 <div className="grid gap-4 mb-4 grid-cols-2">
                   <div className="col-span-2">
                     <label
-                      htmlFor="name"
+                      htmlFor="nome"
                       className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                     >
-                      Nome Completo
+                      Nome da Peça
                     </label>
                     <input
                       type="text"
-                      name="name"
-                      id="name"
+                      name="nome"
+                      id="nome"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Digite seu nome completo"
+                      placeholder="Digite o nome da peça"
                       required
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
                     <label
-                      htmlFor="cpf"
+                      htmlFor="precoCompra"
                       className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                     >
-                      CPF
+                      Preço de Compra
                     </label>
                     <input
-                      type="text"
-                      name="cpf"
-                      id="cpf"
+                      type="number"
+                      name="precoCompra"
+                      id="precoCompra"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Digite seu CPF"
+                      placeholder="Digite o preço de compra"
                       required
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
                     <label
-                      htmlFor="car"
+                      htmlFor="precoFrete"
                       className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                     >
-                      Carro
+                      Preço do Frete
                     </label>
                     <input
-                      type="text"
-                      name="car"
-                      id="car"
+                      type="number"
+                      name="precoFrete"
+                      id="precoFrete"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Digite o modelo do carro"
+                      placeholder="Digite o preço do frete"
                       required
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
                     <label
-                      htmlFor="dob"
+                      htmlFor="estoque"
                       className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                     >
-                      Data de Nascimento
+                      Estoque
                     </label>
                     <input
-                      type="date"
-                      name="dob"
-                      id="dob"
+                      type="number"
+                      name="estoque"
+                      id="estoque"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      required
-                    />
-                  </div>
-                  <div className="col-span-2 sm:col-span-1">
-                    <label
-                      htmlFor="city"
-                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                      Cidade
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      id="city"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Digite sua cidade"
-                      required
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label
-                      htmlFor="phone"
-                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                      Telefone
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      id="phone"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Digite seu telefone"
+                      placeholder="Digite a quantidade em estoque"
                       required
                     />
                   </div>

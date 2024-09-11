@@ -110,15 +110,29 @@ const Drawer = styled(MuiDrawer, {
 const modalStyle = {
   position: 'absolute',
   top: '10%',
-  left: '4rem', // margem da esquerda
-  right: '4rem', // margem da direita
-  width: 'calc(100% - 8rem)', // 100% da tela menos 4rem de cada lado
-  maxHeight: '80%', // altura máxima do modal
+  left: '4rem',
+  right: '4rem',
+  width: 'calc(100% - 8rem)',
+  maxHeight: '80%',
   bgcolor: '#fff',
   borderRadius: '15px',
   boxShadow: 24,
   p: 4,
-  overflowY: 'auto', // adicionar rolagem vertical se necessário
+  overflowY: 'auto',
+};
+
+const modalStyleOrçamento = {
+  position: 'absolute',
+  top: '10%',
+  left: '12rem',
+  right: '12rem',
+  width: 'calc(100% - 24rem)',
+  maxHeight: '80%',
+  bgcolor: '#fff',
+  borderRadius: '15px',
+  boxShadow: 24,
+  p: 4,
+  overflowY: 'auto',
 };
 
 export default function MiniDrawer() {
@@ -179,7 +193,7 @@ export default function MiniDrawer() {
         </DrawerHeader>
         <Divider />
         <List>
-          {['Inicio', 'Clientes', 'Peças', 'Fechamento', 'Orçamento'].map(
+          {['Inicio', 'Clientes', 'Peças', 'Orçamento', 'Fechamento'].map(
             (text, index) => (
               <ListItem key={text} disablePadding>
                 <ListItemButton onClick={() => handleOpenModal(text)}>
@@ -187,8 +201,8 @@ export default function MiniDrawer() {
                     {index === 0 && <HomeIcon />}
                     {index === 1 && <AccountCircleIcon />}
                     {index === 2 && <BuildIcon />}
-                    {index === 3 && <EqualizerIcon />}
-                    {index === 4 && <ReceiptIcon />}
+                    {index === 3 && <ReceiptIcon />}
+                    {index === 4 && <EqualizerIcon />}
                   </ListItemIcon>
                   <ListItemText primary={text} />
                 </ListItemButton>
@@ -240,7 +254,7 @@ export default function MiniDrawer() {
           aria-labelledby="modal-Orcamento"
           aria-describedby="modal-Orcamento-description"
         >
-          <Box sx={modalStyle}>
+          <Box sx={modalStyleOrçamento}>
             <Orcamento />
           </Box>
         </Modal>
