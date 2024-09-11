@@ -84,3 +84,17 @@ body {
 .date {
   margin: 0; /* Remove margens padrão do <p> */
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .no-print-produto {
+    margin: none !important;
+    border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  }
+}
+
+

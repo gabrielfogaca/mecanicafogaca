@@ -5,6 +5,23 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Stack from '@mui/material/Stack';
 import logo1 from './imagens/logomf.jpg';
 import logo2 from './imagens/logomg.jpg';
+import { useTheme } from '@mui/material/styles';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 const clientData = [
   {
@@ -90,19 +107,56 @@ const PecasData = [
     precoFrete: 35,
     quantidadeEstoque: 10,
   },
+  {
+    nome: 'Carcaça da caixa de câmbio',
+    precoCompra: 2000,
+    precoFrete: 300,
+    quantidadeEstoque: 10,
+  },
+  {
+    nome: 'Coroa e pinhão',
+    precoCompra: 6400,
+    precoFrete: 0,
+    quantidadeEstoque: 10,
+  },
+  {
+    nome: 'Rolamentos',
+    precoCompra: 850,
+    precoFrete: 50,
+    quantidadeEstoque: 10,
+  },
+  {
+    nome: 'Conjunto de engrenagens',
+    precoCompra: 6000,
+    precoFrete: 500,
+    quantidadeEstoque: 10,
+  },
+  {
+    nome: 'Kit cubo e luva',
+    precoCompra: 2200,
+    precoFrete: 200,
+    quantidadeEstoque: 10,
+  },
 ];
+
+const getStyles = (name, personName, theme) => ({
+  fontWeight:
+    personName.indexOf(name) === -1
+      ? theme.typography.fontWeightRegular
+      : theme.typography.fontWeightMedium,
+});
 
 function Orcamento() {
   const [currentDate, setCurrentDate] = useState('');
+  const [selectedClient, setSelectedClient] = useState('');
+  const [selectedPecas, setSelectedPecas] = useState([]);
+  const theme = useTheme();
 
   useEffect(() => {
     const today = new Date();
     const formattedDate = today.toLocaleDateString('pt-BR'); // Formato de data no padrão brasileiro
     setCurrentDate(formattedDate);
   }, []);
-
-  const [selectedClient, setSelectedClient] = useState('');
-  const [selectedPecas, setSelectedPecas] = useState([]);
 
   const handleClientChange = (e) => {
     const client = clientData.find(
@@ -133,7 +187,6 @@ function Orcamento() {
 
   const handleAddPeca = () => {
     const newPeca = { nome: '', quantidade: 1 };
-    // Check if a piece with the same name already exists
     if (!selectedPecas.some((peca) => peca.nome === newPeca.nome)) {
       setSelectedPecas([...selectedPecas, newPeca]);
     } else {
@@ -141,15 +194,27 @@ function Orcamento() {
     }
   };
 
+  const printPage = () => {
+    // Adiciona a classe "no-print" aos elementos que não devem ser impressos
+    const elementsToHide = document.querySelectorAll('.no-print');
+    elementsToHide.forEach((element) => element.classList.add('hidden'));
+
+    // Executa a impressão
+    window.print();
+
+    // Remove a classe "no-print" dos elementos após a impressão
+    elementsToHide.forEach((element) => element.classList.remove('hidden'));
+  };
+
   return (
     <div className="order-form">
       {/* Cabeçalho da página */}
-      <header class="header flex items-center justify-center">
-        <div class="flex flex-col items-center">
+      <header className="header flex items-center justify-center">
+        <div className="flex flex-col items-center">
           <img src={logo1} alt="" className="w-60 mb-4" />
           <img src={logo2} alt="" className="w-60 mb-4" />
         </div>
-        <div class="flex flex-col items-center text-center">
+        <div className="flex flex-col items-center text-center">
           <h2 className="text-2xl font-bold mb-2">
             OFICINA ESPECIALIZADA EM SISTEMA
           </h2>
@@ -163,8 +228,8 @@ function Orcamento() {
 
       {/* Corpo principal */}
       <main className="main">
-        <div class="header-info">
-          <div class="options">
+        <div className="header-info">
+          <div className="options">
             <label>
               <input type="checkbox" name="pedido" className="ml-4" />
               <span className="ml-4">Pedido</span>
@@ -178,47 +243,67 @@ function Orcamento() {
         </div>
 
         {/* Seleção de cliente */}
-        <label htmlFor="cliente">Selecione o Cliente</label>
-        <select
-          id="cliente"
-          value={selectedClient?.nomeCompleto || ''}
-          onChange={handleClientChange}
-        >
-          <option value="">Selecione um cliente</option>
-          {clientData.map((client) => (
-            <option key={client.cpf} value={client.nomeCompleto}>
-              {client.nomeCompleto}
-            </option>
-          ))}
-        </select>
+        <FormControl sx={{ m: 1, width: 300 }}>
+          <InputLabel className="no-print" id="select-client-label">
+            Selecione o Cliente
+          </InputLabel>
+          <Select
+            labelId="select-client-label"
+            id="select-client"
+            value={selectedClient?.nomeCompleto || ''}
+            className="no-print"
+            onChange={handleClientChange}
+            input={<OutlinedInput label="Selecione o Cliente" />}
+            MenuProps={MenuProps}
+          >
+            <MenuItem value="">
+              <em>+ Selecione um cliente</em>
+            </MenuItem>
+            {clientData.map((client) => (
+              <MenuItem
+                key={client.cpf}
+                value={client.nomeCompleto}
+                style={getStyles(
+                  client.nomeCompleto,
+                  selectedClient?.nomeCompleto || '',
+                  theme,
+                )}
+              >
+                {client.nomeCompleto}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         {/* Dados do cliente */}
-        {selectedClient && (
-          <table>
-            <tbody>
-              <tr>
-                <th>Nome</th>
-                <td>{selectedClient.nomeCompleto}</td>
-              </tr>
-              <tr>
-                <th>Endereço</th>
-                <td>{selectedClient.endereco}</td>
-              </tr>
-              <tr>
-                <th>Carro</th>
-                <td>{selectedClient.carro}</td>
-              </tr>
-              <tr>
-                <th>Cidade</th>
-                <td>{selectedClient.cidade}</td>
-              </tr>
-              <tr>
-                <th>CPF/CNPJ</th>
-                <td>{selectedClient.cpf}</td>
-              </tr>
-            </tbody>
-          </table>
-        )}
+        <div className="client-info-container rounded border-1 border-black mb-2">
+          {selectedClient && (
+            <table className="client-info-table">
+              <tbody>
+                <tr>
+                  <th>Nome</th>
+                  <td>{selectedClient.nomeCompleto}</td>
+                </tr>
+                <tr>
+                  <th>Endereço</th>
+                  <td>{selectedClient.endereco}</td>
+                </tr>
+                <tr>
+                  <th>Carro</th>
+                  <td>{selectedClient.carro}</td>
+                </tr>
+                <tr>
+                  <th>Cidade</th>
+                  <td>{selectedClient.cidade}</td>
+                </tr>
+                <tr>
+                  <th>CPF/CNPJ</th>
+                  <td>{selectedClient.cpf}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
+        </div>
 
         {/* Seleção de peças */}
         <table>
@@ -228,7 +313,7 @@ function Orcamento() {
               <th>Descrição do Produto/Serviço</th>
               <th>Valor Unitário</th>
               <th>Total</th>
-              <th>Ação</th>
+              <th className="no-print">Ação</th>
             </tr>
           </thead>
           <tbody>
@@ -244,25 +329,54 @@ function Orcamento() {
                   />
                 </td>
                 <td>
-                  <select
-                    value={peca?.nome || ''}
-                    onChange={(e) => handlePecaChange(e, index)}
-                  >
-                    <option value="">Selecione uma peça</option>
-                    {PecasData.map((peca) => (
-                      <option key={peca.nome} value={peca.nome}>
-                        {peca.nome}
-                      </option>
-                    ))}
-                  </select>
+                  <FormControl sx={{ m: 1, width: 300 }}>
+                    <InputLabel
+                      className="no-print no-print-produto"
+                      id={`select-peca-${index}-label`}
+                    >
+                      Selecione a Peça
+                    </InputLabel>
+                    <Select
+                      className="no-print-produto"
+                      labelId={`select-peca-${index}-label`}
+                      id={`select-peca-${index}`}
+                      value={peca?.nome || ''}
+                      onChange={(e) => handlePecaChange(e, index)}
+                      input={<OutlinedInput label="Selecione a Peça" />}
+                      MenuProps={MenuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Selecione uma peça</em>
+                      </MenuItem>
+                      {PecasData.map((pecaData) => (
+                        <MenuItem
+                          key={pecaData.nome}
+                          value={pecaData.nome}
+                          style={getStyles(
+                            pecaData.nome,
+                            peca?.nome || '',
+                            theme,
+                          )}
+                        >
+                          {pecaData.nome}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </td>
-                <td>{peca?.precoCompra || ''}</td>
                 <td>
                   {peca
                     ? (peca.precoCompra + peca.precoFrete) * peca.quantidade
                     : ''}
                 </td>
                 <td>
+                  {peca
+                    ? (peca.precoCompra + peca.precoFrete) *
+                      1.25 *
+                      peca.quantidade
+                    : ''}
+                </td>
+                <td className="no-print">
                   <Button
                     onClick={() => handleRemovePeca(index)}
                     variant="contained"
@@ -278,9 +392,9 @@ function Orcamento() {
                 <Button
                   type="button"
                   variant="contained"
-                  // className="w-72"
                   color="success"
-                  onClick={() => handleAddPeca(selectedPecas)}
+                  onClick={() => handleAddPeca()}
+                  className="no-print"
                 >
                   + Adicionar Peça ao Pedido/Orçamento
                 </Button>
@@ -292,9 +406,14 @@ function Orcamento() {
 
       {/* Rodapé */}
       <footer className="footer">
-        <div className="relative container space-x-4">
+        <div className="relative container space-x-4 no-print">
           {/* Botões de ações */}
-          <Button variant="contained" className="w-40">
+          <Button
+            variant="contained"
+            color="primary"
+            className="w-40"
+            onClick={printPage}
+          >
             Imprimir
           </Button>
           <Button variant="contained" className="w-72">
@@ -302,19 +421,24 @@ function Orcamento() {
           </Button>
         </div>
 
-        <p>
-          À VISTA: R${' '}
-          {selectedPecas.reduce(
-            (acc, peca) =>
-              acc +
-              (peca
-                ? (peca.precoCompra + peca.precoFrete) * peca.quantidade
-                : 0),
-            0,
-          )}
-          ,00
-        </p>
-        <p>Assinatura: ___________________________</p>
+        <div>
+          <p>
+            À VISTA: R${' '}
+            {selectedPecas.reduce(
+              (acc, peca) =>
+                acc +
+                (peca
+                  ? (peca.precoCompra + peca.precoFrete) *
+                    1.25 *
+                    peca.quantidade
+                  : 0),
+              0,
+            )}
+            ,00
+          </p>
+
+          <p>Assinatura: ___________________________</p>
+        </div>
       </footer>
     </div>
   );

@@ -22,6 +22,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import EqualizerIcon from '@mui/icons-material/Equalizer';
 import HomeIcon from '@mui/icons-material/Home';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import LogoutIcon from '@mui/icons-material/Logout';
 import Clientes from '../Clientes/Clientes'; // Importe o componente correto
 import Pecas from '../Pecas/Pecas'; // Importe o componente correto
 import Fechamento from '../Fechamento/Fechamento'; // Importe o componente correto
@@ -211,6 +212,16 @@ export default function MiniDrawer() {
           )}
         </List>
         <Divider />
+        <List>
+          {['Logout'].map((text, index) => (
+            <ListItem key={text} disablePadding>
+              <ListItemButton onClick={() => handleOpenModal(text)}>
+                <ListItemIcon>{index === 0 && <LogoutIcon />}</ListItemIcon>
+                <ListItemText primary={text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
