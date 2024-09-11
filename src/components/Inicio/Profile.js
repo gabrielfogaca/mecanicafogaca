@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import f250 from './images/f250wpp.jpg';
+import f250 from './images/f250wpp2.jpg';
 import f250cel from './images/f250wppcel.jpg';
 import ResponsiveDrawer from './Drawer.js';
 
