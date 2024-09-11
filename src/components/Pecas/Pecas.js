@@ -1,7 +1,16 @@
 import * as React from 'react';
+import NovaPeca from './NovaPeca';
+import PecasCadastradas from './PecasCadastradas';
 
-function Pecas() {
-  <div className="bg-black">Xerecao</div>;
+function Clientes() {
+  return (
+    <div class="flex flex-row gap-4">
+      <div class="basis-full">
+        <NovaPeca />
+        <PecasCadastradas />
+      </div>
+    </div>
+  );
 }
 
-export default Pecas;
+export default Clientes;

@@ -21,9 +21,11 @@ import BuildIcon from '@mui/icons-material/Build';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import EqualizerIcon from '@mui/icons-material/Equalizer';
 import HomeIcon from '@mui/icons-material/Home';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import Clientes from '../Clientes/Clientes'; // Importe o componente correto
 import Pecas from '../Pecas/Pecas'; // Importe o componente correto
 import Fechamento from '../Fechamento/Fechamento'; // Importe o componente correto
+import Orcamento from '../Orçamento/Orcamento'; // Importe o componente correto
 
 const drawerWidth = 240;
 
@@ -177,19 +179,22 @@ export default function MiniDrawer() {
         </DrawerHeader>
         <Divider />
         <List>
-          {['Inicio', 'Clientes', 'Peças', 'Fechamento'].map((text, index) => (
-            <ListItem key={text} disablePadding>
-              <ListItemButton onClick={() => handleOpenModal(text)}>
-                <ListItemIcon>
-                  {index === 0 && <HomeIcon />}
-                  {index === 1 && <AccountCircleIcon />}
-                  {index === 2 && <BuildIcon />}
-                  {index === 3 && <EqualizerIcon />}
-                </ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
+          {['Inicio', 'Clientes', 'Peças', 'Fechamento', 'Orçamento'].map(
+            (text, index) => (
+              <ListItem key={text} disablePadding>
+                <ListItemButton onClick={() => handleOpenModal(text)}>
+                  <ListItemIcon>
+                    {index === 0 && <HomeIcon />}
+                    {index === 1 && <AccountCircleIcon />}
+                    {index === 2 && <BuildIcon />}
+                    {index === 3 && <EqualizerIcon />}
+                    {index === 4 && <ReceiptIcon />}
+                  </ListItemIcon>
+                  <ListItemText primary={text} />
+                </ListItemButton>
+              </ListItem>
+            ),
+          )}
         </List>
         <Divider />
       </Drawer>
@@ -226,6 +231,17 @@ export default function MiniDrawer() {
         >
           <Box sx={modalStyle}>
             <Fechamento />
+          </Box>
+        </Modal>
+
+        <Modal
+          open={openModal === 'Orçamento'}
+          onClose={handleCloseModal}
+          aria-labelledby="modal-Orcamento"
+          aria-describedby="modal-Orcamento-description"
+        >
+          <Box sx={modalStyle}>
+            <Orcamento />
           </Box>
         </Modal>
       </Box>

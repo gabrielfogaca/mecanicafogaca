@@ -60,7 +60,7 @@ const Cadastrados = () => {
             <div className="flex items-center gap-x-4 flex-1">
               <div className="h-12 w-12 flex-none rounded-full bg-gray-300 dark:bg-gray-600"></div>
               <div>
-                <p className="text-sm font-semibold leading-6 text-gray-900 dark:text-white">
+                <p className="text-sm font-semibold leading-6 text-gray-900 dark:text-black">
                   {client.nomeCompleto}
                 </p>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -77,9 +77,6 @@ const Cadastrados = () => {
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Telefone: {client.telefone}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Orçamentos: {client.orcamentos.join(', ')}
                 </p>
               </div>
             </div>
