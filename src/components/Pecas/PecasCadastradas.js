@@ -6,34 +6,44 @@ const PecasCadastradas = () => {
 
   const PecasData = [
     {
+      id: 1,
       nome: 'Peça A',
       precoCompra: 100,
       precoFrete: 20,
       quantidadeEstoque: 50,
+      dataDoCadastro: '01/09/2024',
     },
     {
+      id: 2,
       nome: 'Peça B',
       precoCompra: 200,
       precoFrete: 30,
       quantidadeEstoque: 30,
+      dataDoCadastro: '01/09/2024',
     },
     {
+      id: 3,
       nome: 'Peça C',
       precoCompra: 150,
       precoFrete: 25,
       quantidadeEstoque: 20,
+      dataDoCadastro: '01/09/2024',
     },
     {
+      id: 4,
       nome: 'Peça D',
       precoCompra: 80,
       precoFrete: 15,
       quantidadeEstoque: 40,
+      dataDoCadastro: '01/09/2024',
     },
     {
+      id: 5,
       nome: 'Peça E',
       precoCompra: 220,
       precoFrete: 35,
       quantidadeEstoque: 10,
+      dataDoCadastro: '01/09/2024',
     },
   ];
 

@@ -388,7 +388,7 @@ function Orcamento() {
               </tr>
             ))}
             <tr>
-              <td colSpan="5">
+              <td colSpan="5" className="no-print">
                 <Button
                   type="button"
                   variant="contained"
@@ -406,6 +406,45 @@ function Orcamento() {
 
       {/* Rodapé */}
       <footer className="footer">
+        <div>
+          <div className="header-info">
+            <div className="options">
+              <p>
+                PARCELADO: R${' '}
+                {selectedPecas.reduce(
+                  (acc, peca) =>
+                    acc +
+                    (peca
+                      ? (peca.precoCompra + peca.precoFrete) *
+                        1.45 *
+                        peca.quantidade
+                      : 0),
+                  0,
+                )}
+                ,00 em até 10X SEM JUROS
+              </p>
+            </div>
+            <div>
+              <p>
+                À VISTA: R${' '}
+                {selectedPecas.reduce(
+                  (acc, peca) =>
+                    acc +
+                    (peca
+                      ? (peca.precoCompra + peca.precoFrete) *
+                        1.25 *
+                        peca.quantidade
+                      : 0),
+                  0,
+                )}
+                ,00
+              </p>
+            </div>
+          </div>
+          <br />
+          <p>Assinatura: ___________________________</p>
+        </div>
+
         <div className="relative container space-x-4 no-print">
           {/* Botões de ações */}
           <Button
@@ -417,27 +456,8 @@ function Orcamento() {
             Imprimir
           </Button>
           <Button variant="contained" className="w-72">
-            Salvar Orçamento
+            Salvar Orçamento/Pedido
           </Button>
-        </div>
-
-        <div>
-          <p>
-            À VISTA: R${' '}
-            {selectedPecas.reduce(
-              (acc, peca) =>
-                acc +
-                (peca
-                  ? (peca.precoCompra + peca.precoFrete) *
-                    1.25 *
-                    peca.quantidade
-                  : 0),
-              0,
-            )}
-            ,00
-          </p>
-
-          <p>Assinatura: ___________________________</p>
         </div>
       </footer>
     </div>
