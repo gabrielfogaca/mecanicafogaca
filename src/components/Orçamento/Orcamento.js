@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import './OrderForm.css';
 import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/Delete';
-import Stack from '@mui/material/Stack';
 import logo1 from './imagens/logomf.jpg';
 import logo2 from './imagens/logomg.jpg';
 import { useTheme } from '@mui/material/styles';
@@ -11,6 +10,11 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
+import { db } from '../../firebase/firebase';
+import { collection, onSnapshot, addDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast, Bounce } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -23,125 +27,9 @@ const MenuProps = {
   },
 };
 
-const clientData = [
-  {
-    nomeCompleto: 'João da Silva',
-    cpf: '123.456.789-00',
-    carro: 'Fiat Uno',
-    dataNascimento: '01/01/1980',
-    cidade: 'São Paulo',
-    telefone: '(11) 98765-4321',
-    endereco: 'Rua das Flores, 123',
-    orcamentos: ['R$ 10.000', 'R$ 15.000', 'R$ 20.000'],
-  },
-  {
-    nomeCompleto: 'Maria Oliveira',
-    cpf: '987.654.321-00',
-    carro: 'Honda Civic',
-    dataNascimento: '15/03/1990',
-    cidade: 'Rio de Janeiro',
-    telefone: '(21) 91234-5678',
-    endereco: 'Avenida Brasil, 456',
-    orcamentos: ['R$ 5.000', 'R$ 8.000', 'R$ 12.000'],
-  },
-  {
-    nomeCompleto: 'Carlos Pereira',
-    cpf: '456.789.123-00',
-    carro: 'Ford Fiesta',
-    dataNascimento: '22/07/1985',
-    cidade: 'Belo Horizonte',
-    telefone: '(31) 99876-5432',
-    endereco: 'Rua dos Mineiros, 789',
-    orcamentos: ['R$ 7.000', 'R$ 10.000', 'R$ 14.000'],
-  },
-  {
-    nomeCompleto: 'Ana Costa',
-    cpf: '321.654.987-00',
-    carro: 'Chevrolet Tracker',
-    dataNascimento: '30/10/1982',
-    cidade: 'Curitiba',
-    telefone: '(41) 93456-7890',
-    endereco: 'Rua das Araucárias, 321',
-    orcamentos: ['R$ 12.000', 'R$ 18.000', 'R$ 22.000'],
-  },
-  {
-    nomeCompleto: 'Roberto Lima',
-    cpf: '654.321.987-00',
-    carro: 'Volkswagen Gol',
-    dataNascimento: '05/12/1978',
-    cidade: 'Porto Alegre',
-    telefone: '(51) 92345-6789',
-    endereco: 'Avenida Farrapos, 654',
-    orcamentos: ['R$ 9.000', 'R$ 13.000', 'R$ 17.000'],
-  },
-];
-
-const PecasData = [
-  {
-    nome: 'Peça A',
-    precoCompra: 100,
-    precoFrete: 20,
-    quantidadeEstoque: 50,
-  },
-  {
-    nome: 'Peça B',
-    precoCompra: 200,
-    precoFrete: 30,
-    quantidadeEstoque: 30,
-  },
-  {
-    nome: 'Peça C',
-    precoCompra: 150,
-    precoFrete: 25,
-    quantidadeEstoque: 20,
-  },
-  {
-    nome: 'Peça D',
-    precoCompra: 80,
-    precoFrete: 15,
-    quantidadeEstoque: 40,
-  },
-  {
-    nome: 'Peça E',
-    precoCompra: 220,
-    precoFrete: 35,
-    quantidadeEstoque: 10,
-  },
-  {
-    nome: 'Carcaça da caixa de câmbio',
-    precoCompra: 2000,
-    precoFrete: 300,
-    quantidadeEstoque: 10,
-  },
-  {
-    nome: 'Coroa e pinhão',
-    precoCompra: 6400,
-    precoFrete: 0,
-    quantidadeEstoque: 10,
-  },
-  {
-    nome: 'Rolamentos',
-    precoCompra: 850,
-    precoFrete: 50,
-    quantidadeEstoque: 10,
-  },
-  {
-    nome: 'Conjunto de engrenagens',
-    precoCompra: 6000,
-    precoFrete: 500,
-    quantidadeEstoque: 10,
-  },
-  {
-    nome: 'Kit cubo e luva',
-    precoCompra: 2200,
-    precoFrete: 200,
-    quantidadeEstoque: 10,
-  },
-];
-
-const getStyles = (name, personName, theme) => ({
+const getStyles = (name, selectedName, theme) => ({
   fontWeight:
-    personName.indexOf(name) === -1
+    selectedName.indexOf(name) === -1
       ? theme.typography.fontWeightRegular
       : theme.typography.fontWeightMedium,
 });
@@ -149,27 +37,59 @@ const getStyles = (name, personName, theme) => ({
 function Orcamento() {
   const [currentDate, setCurrentDate] = useState('');
   const [selectedClient, setSelectedClient] = useState('');
+  const [clientData, setClientData] = useState([]);
   const [selectedPecas, setSelectedPecas] = useState([]);
+  const [pecasData, setPecasData] = useState([]);
+  const [tipo, setTipo] = useState(1); // Default to "Orçamento"
   const theme = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const today = new Date();
-    const formattedDate = today.toLocaleDateString('pt-BR'); // Formato de data no padrão brasileiro
+    const formattedDate = today.toLocaleDateString('pt-BR');
     setCurrentDate(formattedDate);
   }, []);
 
+  // Fetch clients from Firestore
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'cliente'), (snapshot) => {
+      const clients = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setClientData(clients);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch pieces from Firestore
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'peca'), (snapshot) => {
+      const pecas = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        uid: doc.data().uid || doc.id,
+      }));
+      setPecasData(pecas);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const handleClientChange = (e) => {
-    const client = clientData.find(
-      (client) => client.nomeCompleto === e.target.value,
-    );
+    const client = clientData.find((client) => client.nome === e.target.value);
     setSelectedClient(client);
   };
 
   const handlePecaChange = (e, index) => {
-    const selectedPeca = PecasData.find((peca) => peca.nome === e.target.value);
+    const selectedPeca = pecasData.find((peca) => peca.nome === e.target.value);
     if (selectedPeca) {
       const updatedPecas = [...selectedPecas];
-      updatedPecas[index] = { ...selectedPeca, quantidade: 1 };
+      updatedPecas[index] = {
+        ...selectedPeca,
+        quantidade: selectedPecas[index]?.quantidade || 1,
+      };
       setSelectedPecas(updatedPecas);
     }
   };
@@ -186,24 +106,154 @@ function Orcamento() {
   };
 
   const handleAddPeca = () => {
-    const newPeca = { nome: '', quantidade: 1 };
-    if (!selectedPecas.some((peca) => peca.nome === newPeca.nome)) {
-      setSelectedPecas([...selectedPecas, newPeca]);
-    } else {
-      alert('A peça já está adicionada.');
+    // Check if there's any incomplete piece before adding a new one
+    if (selectedPecas.some((peca) => !peca.nome || !peca.uid)) {
+      toast.error('Por favor, selecione uma peça antes de adicionar outra.', {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+      return;
     }
+    const newPeca = { nome: '', quantidade: 1, uid: null };
+    setSelectedPecas([...selectedPecas, newPeca]);
   };
 
   const printPage = () => {
-    // Adiciona a classe "no-print" aos elementos que não devem ser impressos
     const elementsToHide = document.querySelectorAll('.no-print');
     elementsToHide.forEach((element) => element.classList.add('hidden'));
-
-    // Executa a impressão
     window.print();
-
-    // Remove a classe "no-print" dos elementos após a impressão
     elementsToHide.forEach((element) => element.classList.remove('hidden'));
+  };
+
+  // Handle tipo change
+  const handleTipoChange = (e) => {
+    setTipo(Number(e.target.value));
+  };
+
+  // Function to save the budget/order
+  const handleSaveOrcamento = async () => {
+    if (!selectedClient || selectedPecas.length === 0) {
+      toast.error('Por favor, selecione um cliente e pelo menos uma peça.', {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+      return;
+    }
+
+    // Check if all pieces have been selected correctly
+    const incompletePecas = selectedPecas.filter((peca) => !peca.uid);
+    if (incompletePecas.length > 0) {
+      toast.error(
+        'Por favor, selecione uma peça válida para todas as linhas.',
+        {
+          position: 'top-center',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: 'colored',
+          transition: Bounce,
+        },
+      );
+      return;
+    }
+
+    // Calculate total values
+    const valorParcelado = selectedPecas.reduce((acc, peca) => {
+      const precoUnitario = (peca.precoCompra || 0) + (peca.precoFrete || 0);
+      return acc + precoUnitario * 1.45 * (peca.quantidade || 1);
+    }, 0);
+
+    const valorAvista = selectedPecas.reduce((acc, peca) => {
+      const precoUnitario = (peca.precoCompra || 0) + (peca.precoFrete || 0);
+      return acc + precoUnitario * 1.25 * (peca.quantidade || 1);
+    }, 0);
+
+    // Prepare data to save
+    const orcamentoData = {
+      ValorAvista: parseFloat(valorAvista.toFixed(2)),
+      ValorParcelado: parseFloat(valorParcelado.toFixed(2)),
+      carro: selectedClient.carro,
+      cidade: selectedClient.cidade,
+      cpfcnpj: selectedClient.cpfcnpj,
+      dataOrcamento: currentDate,
+      endereco: selectedClient.endereco,
+      nome: selectedClient.nome,
+      placa: selectedClient.placa || '',
+      telefone1: selectedClient.telefone1 || '',
+      tipo: tipo, // Set according to selection
+      uidUser: selectedClient.cpfcnpj,
+      pecas: {},
+    };
+
+    // Add piece details to 'pecas' field
+    selectedPecas.forEach((peca, index) => {
+      if (!peca || !peca.uid) {
+        console.error(`Peça na posição ${index} é inválida:`, peca);
+        return;
+      }
+      // Add piece details as an object with properties
+      orcamentoData.pecas[`peca${index + 1}`] = {
+        uid: peca.uid,
+        precoCompra: peca.precoCompra,
+        precoFrete: peca.precoFrete,
+        quantidade: peca.quantidade,
+      };
+    });
+
+    // Log the data
+    console.log('Selected Client:', selectedClient);
+    console.log('Selected Pecas:', selectedPecas);
+    console.log('Orcamento Data:', orcamentoData);
+
+    // Send to Firestore
+    try {
+      await addDoc(collection(db, 'orcamento'), orcamentoData);
+      toast.success('Orçamento/Pedido salvo com sucesso!', {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+      // Clear the form fields
+      setSelectedClient('');
+      setSelectedPecas([]);
+      setTipo(1); // Reset to "Orçamento"
+    } catch (error) {
+      console.error('Erro ao salvar o orçamento/pedido:', error);
+      toast.error('Ocorreu um erro ao salvar o orçamento/pedido.', {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+    }
   };
 
   return (
@@ -231,11 +281,23 @@ function Orcamento() {
         <div className="header-info">
           <div className="options">
             <label>
-              <input type="checkbox" name="pedido" className="ml-4" />
+              <input
+                type="radio"
+                name="tipo"
+                value="0"
+                checked={tipo === 0}
+                onChange={handleTipoChange}
+              />
               <span className="ml-4">Pedido</span>
             </label>
-            <label>
-              <input type="checkbox" name="orcamento" />
+            <label className="ml-4">
+              <input
+                type="radio"
+                name="tipo"
+                value="1"
+                checked={tipo === 1}
+                onChange={handleTipoChange}
+              />
               <span className="ml-4">Orçamento</span>
             </label>
           </div>
@@ -250,7 +312,7 @@ function Orcamento() {
           <Select
             labelId="select-client-label"
             id="select-client"
-            value={selectedClient?.nomeCompleto || ''}
+            value={selectedClient?.nome || ''}
             className="no-print"
             onChange={handleClientChange}
             input={<OutlinedInput label="Selecione o Cliente" />}
@@ -261,15 +323,15 @@ function Orcamento() {
             </MenuItem>
             {clientData.map((client) => (
               <MenuItem
-                key={client.cpf}
-                value={client.nomeCompleto}
+                key={client.id}
+                value={client.nome}
                 style={getStyles(
-                  client.nomeCompleto,
-                  selectedClient?.nomeCompleto || '',
+                  client.nome,
+                  selectedClient?.nome || '',
                   theme,
                 )}
               >
-                {client.nomeCompleto}
+                {client.nome}
               </MenuItem>
             ))}
           </Select>
@@ -282,7 +344,7 @@ function Orcamento() {
               <tbody>
                 <tr>
                   <th>Nome</th>
-                  <td>{selectedClient.nomeCompleto}</td>
+                  <td>{selectedClient.nome}</td>
                 </tr>
                 <tr>
                   <th>Endereço</th>
@@ -298,7 +360,7 @@ function Orcamento() {
                 </tr>
                 <tr>
                   <th>CPF/CNPJ</th>
-                  <td>{selectedClient.cpf}</td>
+                  <td>{selectedClient.cpfcnpj}</td>
                 </tr>
               </tbody>
             </table>
@@ -324,7 +386,6 @@ function Orcamento() {
                     type="number"
                     value={peca?.quantidade || 1}
                     min="1"
-                    max={peca?.quantidadeEstoque || 1}
                     onChange={(e) => handleQuantityChange(e, index)}
                   />
                 </td>
@@ -348,9 +409,9 @@ function Orcamento() {
                       <MenuItem value="">
                         <em>Selecione uma peça</em>
                       </MenuItem>
-                      {PecasData.map((pecaData) => (
+                      {pecasData.map((pecaData) => (
                         <MenuItem
-                          key={pecaData.nome}
+                          key={pecaData.id}
                           value={pecaData.nome}
                           style={getStyles(
                             pecaData.nome,
@@ -365,15 +426,21 @@ function Orcamento() {
                   </FormControl>
                 </td>
                 <td>
-                  {peca
-                    ? (peca.precoCompra + peca.precoFrete) * peca.quantidade
+                  {peca.precoCompra !== undefined &&
+                  peca.precoFrete !== undefined
+                    ? `R$ ${(
+                        (peca.precoCompra || 0) + (peca.precoFrete || 0)
+                      ).toFixed(2)}`
                     : ''}
                 </td>
                 <td>
-                  {peca
-                    ? (peca.precoCompra + peca.precoFrete) *
-                      1.25 *
-                      peca.quantidade
+                  {peca.precoCompra !== undefined &&
+                  peca.precoFrete !== undefined &&
+                  peca.quantidade
+                    ? `R$ ${(
+                        ((peca.precoCompra || 0) + (peca.precoFrete || 0)) *
+                        peca.quantidade
+                      ).toFixed(2)}`
                     : ''}
                 </td>
                 <td className="no-print">
@@ -393,7 +460,7 @@ function Orcamento() {
                   type="button"
                   variant="contained"
                   color="success"
-                  onClick={() => handleAddPeca()}
+                  onClick={handleAddPeca}
                   className="no-print"
                 >
                   + Adicionar Peça ao Pedido/Orçamento
@@ -411,33 +478,26 @@ function Orcamento() {
             <div className="options">
               <p>
                 PARCELADO: R${' '}
-                {selectedPecas.reduce(
-                  (acc, peca) =>
-                    acc +
-                    (peca
-                      ? (peca.precoCompra + peca.precoFrete) *
-                        1.45 *
-                        peca.quantidade
-                      : 0),
-                  0,
-                )}
-                ,00 em até 10X SEM JUROS
+                {selectedPecas
+                  .reduce((acc, peca) => {
+                    const precoUnitario =
+                      (peca.precoCompra || 0) + (peca.precoFrete || 0);
+                    return acc + precoUnitario * 1.45 * (peca.quantidade || 1);
+                  }, 0)
+                  .toFixed(2)}{' '}
+                em até 10X SEM JUROS
               </p>
             </div>
             <div>
               <p>
                 À VISTA: R${' '}
-                {selectedPecas.reduce(
-                  (acc, peca) =>
-                    acc +
-                    (peca
-                      ? (peca.precoCompra + peca.precoFrete) *
-                        1.25 *
-                        peca.quantidade
-                      : 0),
-                  0,
-                )}
-                ,00
+                {selectedPecas
+                  .reduce((acc, peca) => {
+                    const precoUnitario =
+                      (peca.precoCompra || 0) + (peca.precoFrete || 0);
+                    return acc + precoUnitario * 1.25 * (peca.quantidade || 1);
+                  }, 0)
+                  .toFixed(2)}
               </p>
             </div>
           </div>
@@ -455,11 +515,32 @@ function Orcamento() {
           >
             Imprimir
           </Button>
-          <Button variant="contained" className="w-72">
+          <Button
+            variant="contained"
+            className="w-72"
+            onClick={handleSaveOrcamento}
+            disabled={
+              !selectedClient ||
+              selectedPecas.length === 0 ||
+              selectedPecas.some((peca) => !peca.uid)
+            }
+          >
             Salvar Orçamento/Pedido
           </Button>
         </div>
       </footer>
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="colored"
+        transition={Bounce}
+        closeButton={false}
+      />
     </div>
   );
 }
