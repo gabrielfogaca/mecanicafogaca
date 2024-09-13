@@ -111,7 +111,7 @@ const NovaPeca = () => {
                   type="button"
                   className="text-white bg-gray-500 hover:bg-gray-600 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                 >
-                  <span className="sr-only">Fechar</span>
+                  <span>X</span>
                 </button>
               </div>
               {/* Corpo do modal */}
