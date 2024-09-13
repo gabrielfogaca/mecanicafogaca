@@ -65,7 +65,7 @@ const PecasCard = ({ pecas }) => {
             Quantidade em Estoque
           </h3>
           <p className="text-gray-900 dark:text-gray-100">
-            {pecas.quantidadeEstoque || 'Não disponível'}
+            {pecas.estoque || 'Não disponível'}
           </p>
         </div>
       </div>

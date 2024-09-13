@@ -1,17 +1,83 @@
 import React, { useState } from 'react';
-
-const sronly = {
-  width: '1px',
-  height: '1px',
-  margin: -'1px',
-  color: ' #ffffff' /* Texto branco */,
-};
+import { useAuth } from '../../contexts/authContext'; // Importar o contexto de autenticação
+import { db } from '../../firebase/firebase'; // Importar o db do Firebase
+import { collection, addDoc } from 'firebase/firestore'; // Importar funções do Firestore
+import { v4 as uuidv4 } from 'uuid'; // Importar função para gerar UUID
+import { toast, ToastContainer } from 'react-toastify'; // Importar o Toastify
+import 'react-toastify/dist/ReactToastify.css'; // Importar estilos do Toastify
+import { Bounce } from 'react-toastify';
+import { useNavigate } from 'react-router-dom'; // Importar o hook para navegação
 
 const NovaPeca = () => {
+  const { userLoggedIn } = useAuth(); // Obter estado de autenticação
+  const navigate = useNavigate(); // Hook para navegação
   const [isOpen, setIsOpen] = useState(false);
+  const [nome, setNome] = useState('');
+  const [precoCompra, setPrecoCompra] = useState('');
+  const [precoFrete, setPrecoFrete] = useState('');
+  const [estoque, setEstoque] = useState('');
 
   const toggleNovaPeca = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Verificar se o usuário está autenticado
+    if (!userLoggedIn) {
+      navigate('/'); // Redirecionar para a página inicial
+      return;
+    }
+
+    try {
+      // Gerar um UID único para a peça
+      const uid = uuidv4();
+      const data = {
+        uid,
+        nome,
+        precoCompra: parseFloat(precoCompra),
+        precoFrete: parseFloat(precoFrete),
+        estoque: parseInt(estoque, 10),
+        dataDoCadastro: new Date().toLocaleDateString('pt-BR'),
+      };
+
+      // Salvar a nova peça no Firestore
+      await addDoc(collection(db, 'peca'), data);
+
+      // Limpar os campos do formulário e fechar o modal
+      setNome('');
+      setPrecoCompra('');
+      setPrecoFrete('');
+      setEstoque('');
+      toggleNovaPeca();
+
+      // Exibir mensagem de sucesso
+      toast.success(`A peça "${nome}" foi cadastrada com sucesso!`, {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+    } catch (error) {
+      console.error('Erro ao cadastrar peça:', error);
+      toast.error(`Não foi possível cadastrar a peça "${nome}".`, {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+    }
   };
 
   return (
@@ -45,11 +111,11 @@ const NovaPeca = () => {
                   type="button"
                   className="text-white bg-gray-500 hover:bg-gray-600 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                 >
-                  <span sx={sronly}>X</span>
+                  <span className="sr-only">Fechar</span>
                 </button>
               </div>
               {/* Corpo do modal */}
-              <form className="p-4 md:p-5">
+              <form className="p-4 md:p-5" onSubmit={handleSubmit}>
                 <div className="grid gap-4 mb-4 grid-cols-2">
                   <div className="col-span-2">
                     <label
@@ -64,6 +130,8 @@ const NovaPeca = () => {
                       id="nome"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       placeholder="Digite o nome da peça"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
                       required
                     />
                   </div>
@@ -80,6 +148,8 @@ const NovaPeca = () => {
                       id="precoCompra"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       placeholder="Digite o preço de compra"
+                      value={precoCompra}
+                      onChange={(e) => setPrecoCompra(e.target.value)}
                       required
                     />
                   </div>
@@ -96,6 +166,8 @@ const NovaPeca = () => {
                       id="precoFrete"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       placeholder="Digite o preço do frete"
+                      value={precoFrete}
+                      onChange={(e) => setPrecoFrete(e.target.value)}
                       required
                     />
                   </div>
@@ -112,6 +184,8 @@ const NovaPeca = () => {
                       id="estoque"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       placeholder="Digite a quantidade em estoque"
+                      value={estoque}
+                      onChange={(e) => setEstoque(e.target.value)}
                       required
                     />
                   </div>
@@ -120,18 +194,6 @@ const NovaPeca = () => {
                   type="submit"
                   className="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                 >
-                  <svg
-                    className="me-1 -ms-1 w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
                   Cadastrar Peça
                 </button>
               </form>
@@ -139,6 +201,19 @@ const NovaPeca = () => {
           </div>
         </div>
       )}
+
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="colored"
+        transition={Bounce}
+        closeButton={false}
+      />
     </>
   );
 };
