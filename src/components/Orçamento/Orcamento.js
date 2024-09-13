@@ -211,6 +211,7 @@ function Orcamento() {
       // Add piece details as an object with properties
       orcamentoData.pecas[`peca${index + 1}`] = {
         uid: peca.uid,
+        nome: peca.nome,
         precoCompra: peca.precoCompra,
         precoFrete: peca.precoFrete,
         quantidade: peca.quantidade,

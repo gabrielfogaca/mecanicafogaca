@@ -43,15 +43,28 @@ const CardOrcamento = ({ orcamento, onClose }) => {
             <div className="header-info">
               <div className="options">
                 <label>
-                  <input type="checkbox" name="pedido" className="ml-4" />
+                  <input
+                    type="checkbox"
+                    name="pedido"
+                    className="ml-4"
+                    checked={orcamento.tipo === 0}
+                    readOnly
+                  />
                   <span className="ml-4">Pedido</span>
                 </label>
                 <label>
-                  <input type="checkbox" name="orcamento" />
+                  <input
+                    type="checkbox"
+                    name="orcamento"
+                    checked={orcamento.tipo === 1}
+                    readOnly
+                  />
                   <span className="ml-4">Orçamento</span>
                 </label>
               </div>
-              <p className="date">Data: {currentDate}</p>
+              <p className="date">
+                Data: {orcamento.dataOrcamento || currentDate}
+              </p>
             </div>
 
             {/* Dados do cliente */}
@@ -83,7 +96,6 @@ const CardOrcamento = ({ orcamento, onClose }) => {
             </div>
 
             {/* Seleção de peças */}
-            {/* Seleção de peças */}
             <table>
               <thead>
                 <tr>
@@ -94,17 +106,29 @@ const CardOrcamento = ({ orcamento, onClose }) => {
                 </tr>
               </thead>
               <tbody>
-                {orcamento.pecas && orcamento.pecas.length > 0 ? (
-                  orcamento.pecas.map((peca, index) => (
+                {orcamento.pecas &&
+                Object.values(orcamento.pecas).length > 0 ? (
+                  Object.values(orcamento.pecas).map((peca, index) => (
                     <tr key={index}>
                       <td>{peca.quantidade}</td>
-                      <td>{peca.nome}</td>
-                      <td>{(peca.precoCompra + peca.precoFrete).toFixed(2)}</td>
+                      <td>{peca.nome || 'Peça não especificada'}</td>
                       <td>
-                        {(
-                          (peca.precoCompra + peca.precoFrete) *
-                          peca.quantidade
-                        ).toFixed(2)}
+                        {peca.precoCompra !== undefined &&
+                        peca.precoFrete !== undefined
+                          ? `R$ ${(peca.precoCompra + peca.precoFrete).toFixed(
+                              2,
+                            )}`
+                          : 'N/A'}
+                      </td>
+                      <td>
+                        {peca.precoCompra !== undefined &&
+                        peca.precoFrete !== undefined &&
+                        peca.quantidade
+                          ? `R$ ${(
+                              (peca.precoCompra + peca.precoFrete) *
+                              peca.quantidade
+                            ).toFixed(2)}`
+                          : 'N/A'}
                       </td>
                     </tr>
                   ))
@@ -119,7 +143,10 @@ const CardOrcamento = ({ orcamento, onClose }) => {
                     Total À Vista
                   </td>
                   <td className="font-bold">
-                    R${orcamento.ValorAvista.toFixed(2)}
+                    R$
+                    {orcamento.ValorAvista
+                      ? orcamento.ValorAvista.toFixed(2)
+                      : 'N/A'}
                   </td>
                 </tr>
                 <tr>
@@ -127,7 +154,10 @@ const CardOrcamento = ({ orcamento, onClose }) => {
                     Total Parcelado
                   </td>
                   <td className="font-bold">
-                    R${orcamento.ValorParcelado.toFixed(2)}
+                    R$
+                    {orcamento.ValorParcelado
+                      ? orcamento.ValorParcelado.toFixed(2)
+                      : 'N/A'}
                   </td>
                 </tr>
               </tbody>
