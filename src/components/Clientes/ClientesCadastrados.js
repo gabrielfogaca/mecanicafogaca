@@ -1,97 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/authContext'; // Importar o contexto de autenticação
+import { collection, onSnapshot } from 'firebase/firestore'; // Importar funções do Firestore
+import { db } from '../../firebase/firebase'; // Importar o db do Firebase
 import ClientCard from './SelectedClient';
 
 const Cadastrados = () => {
-  const clientData = [
-    {
-      id: 1,
-      nome: 'João da Silva',
-      endereco: 'Rua das Flores, 123',
-      cpfCnpj: '123.456.789-00',
-      carro: 'Fiat Uno',
-      placa: 'ABC-1234',
-      dataNascimento: '01/01/1980',
-      cidade: 'São Paulo',
-      telefone1: '(11) 98765-4321',
-      telefone2: '(11) 91234-5678',
-      dataDoCadastro: '01/09/2024',
-      orcamentos: [
-        { id: 1, ValorAvista: 'R$ 225.00', dataOrcamento: '01/09/2024' },
-        { id: 2, ValorAvista: 'R$ 400.00', dataOrcamento: '02/09/2024' },
-      ],
-    },
-    {
-      id: 2,
-      nome: 'Maria Oliveira',
-      endereco: 'Rua das Palmeiras, 456',
-      cpfCnpj: '987.654.321-00',
-      carro: 'Honda Civic',
-      placa: 'XYZ-5678',
-      dataNascimento: '15/03/1990',
-      cidade: 'Rio de Janeiro',
-      telefone1: '(21) 91234-5678',
-      telefone2: '(21) 92345-6789',
-      dataDoCadastro: '01/09/2024',
-      orcamentos: [
-        { id: 1, ValorAvista: 'R$ 225.00', dataOrcamento: '01/09/2024' },
-        { id: 2, ValorAvista: 'R$ 400.00', dataOrcamento: '02/09/2024' },
-      ],
-    },
-    {
-      id: 3,
-      nome: 'Carlos Pereira',
-      endereco: 'Avenida Central, 789',
-      cpfCnpj: '456.789.123-00',
-      carro: 'Ford Fiesta',
-      placa: 'DEF-9012',
-      dataNascimento: '22/07/1985',
-      cidade: 'Belo Horizonte',
-      telefone1: '(31) 99876-5432',
-      telefone2: '(31) 93214-5678',
-      dataDoCadastro: '01/09/2024',
-      orcamentos: [
-        { id: 1, ValorAvista: 'R$ 225.00', dataOrcamento: '01/09/2024' },
-        { id: 2, ValorAvista: 'R$ 400.00', dataOrcamento: '02/09/2024' },
-      ],
-    },
-    {
-      id: 4,
-      nome: 'Ana Costa',
-      endereco: 'Rua Marechal, 234',
-      cpfCnpj: '321.654.987-00',
-      carro: 'Chevrolet Tracker',
-      placa: 'GHI-3456',
-      dataNascimento: '30/10/1982',
-      cidade: 'Curitiba',
-      telefone1: '(41) 93456-7890',
-      telefone2: '(41) 92345-6789',
-      dataDoCadastro: '01/09/2024',
-      orcamentos: [
-        { id: 1, ValorAvista: 'R$ 225.00', dataOrcamento: '01/09/2024' },
-        { id: 2, ValorAvista: 'R$ 400.00', dataOrcamento: '02/09/2024' },
-      ],
-    },
-    {
-      id: 5,
-      nome: 'Roberto Lima',
-      endereco: 'Rua do Comércio, 567',
-      cpfCnpj: '654.321.987-00',
-      carro: 'Volkswagen Gol',
-      placa: 'JKL-6789',
-      dataNascimento: '05/12/1978',
-      cidade: 'Porto Alegre',
-      telefone1: '(51) 92345-6789',
-      telefone2: '(51) 93456-7890',
-      dataDoCadastro: '01/09/2024',
-      orcamentos: [
-        { id: 1, ValorAvista: 'R$ 225.00', dataOrcamento: '01/09/2024' },
-        { id: 2, ValorAvista: 'R$ 400.00', dataOrcamento: '02/09/2024' },
-      ],
-    },
-  ];
-
+  const { userLoggedIn } = useAuth(); // Obter estado de autenticação
+  const [clientData, setClientData] = useState([]); // Estado para armazenar dados dos clientes
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClient, setSelectedClient] = useState(null);
+
+  useEffect(() => {
+    if (userLoggedIn) {
+      // Função para buscar clientes e orçamentos do Firestore
+      const unsubscribeClients = onSnapshot(
+        collection(db, 'cliente'),
+        async (clientsSnapshot) => {
+          try {
+            // Buscar clientes
+            const clients = clientsSnapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+              orcamentos: [], // Inicialmente, orçamentos vazios
+            }));
+
+            // Buscar orçamentos
+            const orcamentosSnapshot = await onSnapshot(
+              collection(db, 'orcamento'),
+              (orcamentosSnapshot) => {
+                const orcamentos = orcamentosSnapshot.docs.map((doc) =>
+                  doc.data(),
+                );
+
+                // Associar orçamentos aos clientes
+                const updatedClients = clients.map((client) => {
+                  // Filtrar orçamentos que correspondem ao cliente atual
+                  const clientOrcamentos = orcamentos.filter(
+                    (orcamento) => orcamento.cpfcnpj === client.cpfcnpj,
+                  );
+                  return {
+                    ...client,
+                    orcamentos: clientOrcamentos,
+                  };
+                });
+
+                setClientData(updatedClients);
+              },
+            );
+
+            // Cleanup function to unsubscribe from the listener
+            return () => {
+              unsubscribeClients();
+              orcamentosSnapshot(); // Unsubscribe from orcamentos listener
+            };
+          } catch (error) {
+            console.error('Erro ao buscar clientes e orçamentos:', error);
+          }
+        },
+      );
+
+      // Cleanup function to unsubscribe from the listener
+      return () => {
+        unsubscribeClients();
+      };
+    }
+  }, [userLoggedIn]);
 
   // Filtra os clientes pelo nome ou pela placa
   const filteredClients = clientData.filter(
@@ -99,6 +72,11 @@ const Cadastrados = () => {
       client.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.placa.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  // Redireciona para a página de login se o usuário não estiver autenticado
+  if (!userLoggedIn) {
+    return <p>Você precisa estar logado para acessar esta página.</p>;
+  }
 
   return (
     <div className="flex flex-col lg:flex-row">
@@ -123,7 +101,7 @@ const Cadastrados = () => {
                   {client.nome}
                 </p>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  CPF/CNPJ: {client.cpfCnpj}
+                  CPF/CNPJ: {client.cpfcnpj}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Carro: {client.carro}

@@ -12,6 +12,9 @@ import logo2 from './imagens/logomg.jpg';
 const CardOrcamento = ({ orcamento, onClose }) => {
   const currentDate = new Date().toLocaleDateString();
 
+  // Adicione este console.log para verificar os dados do orçamento
+  console.log('Orçamento recebido:', orcamento);
+
   return (
     <Dialog open={!!orcamento} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>Orçamento / Pedido</DialogTitle>
@@ -57,28 +60,29 @@ const CardOrcamento = ({ orcamento, onClose }) => {
                 <tbody>
                   <tr>
                     <th>Nome</th>
-                    <td>{orcamento.nome}</td>
+                    <td>{orcamento.nome || 'Não disponível'}</td>
                   </tr>
                   <tr>
                     <th>Endereço</th>
-                    <td>{orcamento.endereco}</td>
+                    <td>{orcamento.endereco || 'Não disponível'}</td>
                   </tr>
                   <tr>
                     <th>Carro</th>
-                    <td>{orcamento.carro}</td>
+                    <td>{orcamento.carro || 'Não disponível'}</td>
                   </tr>
                   <tr>
                     <th>Cidade</th>
-                    <td>{orcamento.cidade}</td>
+                    <td>{orcamento.cidade || 'Não disponível'}</td>
                   </tr>
                   <tr>
                     <th>CPF/CNPJ</th>
-                    <td>{orcamento.cpfCnpj}</td>
+                    <td>{orcamento.cpfcnpj || 'Não disponível'}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
+            {/* Seleção de peças */}
             {/* Seleção de peças */}
             <table>
               <thead>
@@ -90,56 +94,40 @@ const CardOrcamento = ({ orcamento, onClose }) => {
                 </tr>
               </thead>
               <tbody>
-                {orcamento.pecas.map((peca, index) => (
-                  <tr key={index}>
-                    <td>{peca.quantidade}</td>
-                    <td>{peca.nome}</td>
-                    <td>{(peca.precoCompra + peca.precoFrete).toFixed(2)}</td>
-                    <td>
-                      {(
-                        (peca.precoCompra + peca.precoFrete) *
-                        1.25 *
-                        peca.quantidade
-                      ).toFixed(2)}
-                    </td>
+                {orcamento.pecas && orcamento.pecas.length > 0 ? (
+                  orcamento.pecas.map((peca, index) => (
+                    <tr key={index}>
+                      <td>{peca.quantidade}</td>
+                      <td>{peca.nome}</td>
+                      <td>{(peca.precoCompra + peca.precoFrete).toFixed(2)}</td>
+                      <td>
+                        {(
+                          (peca.precoCompra + peca.precoFrete) *
+                          peca.quantidade
+                        ).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4">Nenhuma peça disponível</td>
                   </tr>
-                ))}
+                )}
+                {/* Linha para valores totais */}
                 <tr>
-                  <td colSpan="4">
-                    <p>
-                      <input
-                        type="checkbox"
-                        name="parcelado"
-                        className="mr-9"
-                      />
-                      PARCELADO: R${' '}
-                      {orcamento.pecas
-                        .reduce(
-                          (acc, peca) =>
-                            acc +
-                            (peca.precoCompra + peca.precoFrete) *
-                              1.45 *
-                              peca.quantidade,
-                          0,
-                        )
-                        .toFixed(2)}{' '}
-                      Reais em até 10X SEM JUROS
-                    </p>
-                    <p>
-                      <input type="checkbox" name="avista" className="mr-9" />À
-                      VISTA: R${' '}
-                      {orcamento.pecas
-                        .reduce(
-                          (acc, peca) =>
-                            acc +
-                            (peca.precoCompra + peca.precoFrete) *
-                              1.25 *
-                              peca.quantidade,
-                          0,
-                        )
-                        .toFixed(2)}{' '}
-                      Reais
-                    </p>
+                  <td colSpan="3" className="font-bold">
+                    Total À Vista
+                  </td>
+                  <td className="font-bold">
+                    R${orcamento.ValorAvista.toFixed(2)}
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan="3" className="font-bold">
+                    Total Parcelado
+                  </td>
+                  <td className="font-bold">
+                    R${orcamento.ValorParcelado.toFixed(2)}
                   </td>
                 </tr>
               </tbody>

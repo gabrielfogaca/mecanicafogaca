@@ -23,10 +23,12 @@ import EqualizerIcon from '@mui/icons-material/Equalizer';
 import HomeIcon from '@mui/icons-material/Home';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import LogoutIcon from '@mui/icons-material/Logout';
-import Clientes from '../Clientes/Clientes'; // Importe o componente correto
-import Pecas from '../Pecas/Pecas'; // Importe o componente correto
-import Fechamento from '../Fechamento/Fechamento'; // Importe o componente correto
-import Orcamento from '../Orçamento/Orcamento'; // Importe o componente correto
+import Clientes from '../Clientes/Clientes';
+import Pecas from '../Pecas/Pecas';
+import Fechamento from '../Fechamento/Fechamento';
+import Orcamento from '../Orçamento/Orcamento';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/authContext'; // Verifique a importação
 
 const drawerWidth = 240;
 
@@ -140,6 +142,8 @@ export default function MiniDrawer() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [openModal, setOpenModal] = React.useState(null);
+  const navigate = useNavigate();
+  const { doSignOut } = useAuth(); // Certifique-se de que doSignOut está disponível
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -155,6 +159,19 @@ export default function MiniDrawer() {
 
   const handleCloseModal = () => {
     setOpenModal(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      if (doSignOut) {
+        await doSignOut();
+        navigate('/'); // Redireciona para a página inicial
+      } else {
+        console.error('doSignOut não está disponível no contexto.');
+      }
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
 
   return (
@@ -213,14 +230,14 @@ export default function MiniDrawer() {
         </List>
         <Divider />
         <List>
-          {['Logout'].map((text, index) => (
-            <ListItem key={text} disablePadding>
-              <ListItemButton onClick={() => handleOpenModal(text)}>
-                <ListItemIcon>{index === 0 && <LogoutIcon />}</ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleLogout}>
+              <ListItemIcon>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItemButton>
+          </ListItem>
         </List>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import f250 from './images/f250wpp2.jpg';
 import f250cel from './images/f250wppcel.jpg';
 import ResponsiveDrawer from './Drawer.js';
+import { useAuth } from '../../contexts/authContext'; // Importe o contexto de autenticação
+import { Navigate } from 'react-router-dom'; // Importe para redirecionar se não estiver logado
 
 function getWindowSize() {
   const width = window.innerWidth;
@@ -11,6 +13,7 @@ function getWindowSize() {
 
 function Profile() {
   const [windowSize, setWindowSize] = useState(getWindowSize());
+  const { userLoggedIn, loading } = useAuth(); // Verifica se o usuário está logado
 
   useEffect(() => {
     const handleResize = () => {
@@ -25,6 +28,18 @@ function Profile() {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Verifica se está carregando a autenticação
+  if (loading) {
+    return <div>Loading...</div>; // Pode exibir um loading enquanto verifica o login
+  }
+
+  // Se o usuário não estiver logado, redireciona para a página de login
+  if (!userLoggedIn) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Caso o usuário esteja logado, renderiza o componente
   return (
     <>
       {windowSize.width < 740 ? (

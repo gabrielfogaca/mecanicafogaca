@@ -1,99 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import CardOrcamento from './CardOrcamento';
 
 const ClientCard = ({ client }) => {
-  // Define os orçamentos disponíveis
-  const orcamentos = [
-    {
-      id: 1,
-      nome: 'João da Silva',
-      endereco: 'Rua das Flores, 123',
-      cpfCnpj: '123.456.789-00',
-      carro: 'Fiat Uno',
-      placa: 'ABC-1234',
-      cidade: 'São Paulo',
-      telefone1: '(11) 98765-4321',
-      telefone2: '(11) 91234-5678',
-      pecas: [
-        {
-          id: 1,
-          nome: 'Peça A',
-          precoCompra: 100,
-          precoFrete: 20,
-          quantidade: 2,
-        },
-        {
-          id: 3,
-          nome: 'Peça C',
-          precoCompra: 150,
-          precoFrete: 25,
-          quantidade: 1,
-        },
-      ],
-      type: 1,
-      ValorParcelado: '638.75',
-      ValorAvista: '450.00',
-      dataOrcamento: '01/09/2024',
-    },
-    {
-      id: 2,
-      nome: 'Maria Oliveira',
-      endereco: 'Rua das Palmeiras, 456',
-      cpfCnpj: '987.654.321-00',
-      carro: 'Honda Civic',
-      placa: 'XYZ-5678',
-      cidade: 'Rio de Janeiro',
-      telefone1: '(21) 91234-5678',
-      telefone2: '(21) 92345-6789',
-      pecas: [
-        {
-          id: 2,
-          nome: 'Peça B',
-          precoCompra: 200,
-          precoFrete: 30,
-          quantidade: 1,
-        },
-        {
-          id: 4,
-          nome: 'Peça D',
-          precoCompra: 80,
-          precoFrete: 15,
-          quantidade: 3,
-        },
-      ],
-      type: 0,
-      ValorParcelado: '514.13',
-      ValorAvista: '400.00',
-      dataOrcamento: '02/09/2024',
-    },
-    {
-      id: 3,
-      nome: 'Carlos Pereira',
-      endereco: 'Avenida Central, 789',
-      cpfCnpj: '456.789.123-00',
-      carro: 'Ford Fiesta',
-      placa: 'DEF-9012',
-      cidade: 'Belo Horizonte',
-      telefone1: '(31) 99876-5432',
-      telefone2: '(31) 93214-5678',
-      pecas: [
-        {
-          id: 5,
-          nome: 'Peça E',
-          precoCompra: 220,
-          precoFrete: 35,
-          quantidade: 2,
-        },
-      ],
-      type: 2,
-      ValorParcelado: '837.50',
-      ValorAvista: '637.50',
-      dataOrcamento: '03/09/2024',
-    },
-  ];
-
   const [selectedOrcamento, setSelectedOrcamento] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [orcamentos, setOrcamentos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Configuração do Firebase
+  const db = getFirestore();
+  const auth = getAuth();
+
+  // Função para buscar orçamentos do Firestore
+  const fetchOrcamentos = async () => {
+    if (!client || !client.cpfcnpj) return;
+
+    try {
+      setLoading(true);
+      const orcamentosRef = collection(db, 'orcamento');
+      const q = query(orcamentosRef, where('cpfcnpj', '==', client.cpfcnpj));
+      const querySnapshot = await getDocs(q);
+      const orcamentosData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setOrcamentos(orcamentosData);
+    } catch (error) {
+      console.error('Erro ao buscar orçamentos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Efetuar autenticação e buscar orçamentos quando o componente é montado
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchOrcamentos();
+      } else {
+        console.log('Usuário não autenticado.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth, client]);
 
   // Função para selecionar um orçamento e exibir o modal
   const handleOrcamentoClick = (id) => {
@@ -159,7 +117,7 @@ const ClientCard = ({ client }) => {
             CPF/CNPJ
           </h3>
           <p className="text-gray-900 dark:text-gray-100">
-            {client.cpfCnpj || 'Não disponível'}
+            {client.cpfcnpj || 'Não disponível'}
           </p>
         </div>
         <div>
@@ -214,30 +172,34 @@ const ClientCard = ({ client }) => {
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Orçamentos
           </h3>
-          <ul className="list-disc pl-5 text-gray-900 dark:text-gray-100">
-            {client.orcamentos && client.orcamentos.length > 0 ? (
-              client.orcamentos.map((orcamento) => (
-                <li key={orcamento.id}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-semibold">Valor: </span>
-                      {orcamento.ValorAvista} -
-                      <span className="font-semibold"> Data: </span>
-                      {orcamento.dataOrcamento}
-                      <button
-                        onClick={() => handleOrcamentoClick(orcamento.id)}
-                        className="text-white bg-blue-500 rounded hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 w-80"
-                      >
-                        Visualizar Orçamento / Pedido
-                      </button>
+          {loading ? (
+            <p>Carregando orçamentos...</p>
+          ) : (
+            <ul className="list-disc pl-5 text-gray-900 dark:text-gray-100">
+              {orcamentos.length > 0 ? (
+                orcamentos.map((orcamento) => (
+                  <li key={orcamento.id}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-semibold">Valor: </span>
+                        {orcamento.ValorAvista} -
+                        <span className="font-semibold"> Data: </span>
+                        {orcamento.dataOrcamento}
+                        <button
+                          onClick={() => handleOrcamentoClick(orcamento.id)}
+                          className="text-white bg-blue-500 rounded hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 w-80"
+                        >
+                          Visualizar Orçamento / Pedido
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))
-            ) : (
-              <li>Não disponível</li>
-            )}
-          </ul>
+                  </li>
+                ))
+              ) : (
+                <li>Não disponível</li>
+              )}
+            </ul>
+          )}
         </div>
 
         {/* Modal */}

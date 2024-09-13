@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/authContext'; // Ajuste o caminho conforme necessário
 import wpp from './images/wallpper.jpeg';
 import wppcel from './images/wallppercel.jpeg';
 import Loginform from '../login/Loginform';
@@ -12,6 +14,8 @@ function getWindowSize() {
 
 function Inicio() {
   const [windowSize, setWindowSize] = useState(getWindowSize());
+  const { currentUser } = useAuth(); // Obtemos o usuário atual do contexto de autenticação
+  const navigate = useNavigate(); // Hook para redirecionar
 
   useEffect(() => {
     const handleResize = () => {
@@ -26,6 +30,14 @@ function Inicio() {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      console.log('User is logged in, redirecting to /profile');
+      navigate('/profile');
+    }
+  }, [currentUser, navigate]);
+
   return (
     <>
       {windowSize.width < 740 ? (

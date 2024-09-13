@@ -1,18 +1,85 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-
-const sronly = {
-  width: '1px',
-  height: '1px',
-  margin: -'1px',
-  color: ' #ffffff' /* Texto branco */,
-};
+import { useAuth } from '../../contexts/authContext';
+import { db } from '../../firebase/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { ToastContainer, toast, Bounce } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const NovoCliente = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    nome: '',
+    cpfcnpj: '',
+    carro: '',
+    cidade: '',
+    dataNascimento: '',
+    telefone1: '',
+    telefone2: '',
+    endereco: '',
+    placa: '',
+    dataDoCadastro: new Date().toLocaleDateString('pt-BR'),
+    numero: 0,
+  });
+
+  const { currentUser } = useAuth();
 
   const toggleNovoCliente = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!currentUser) {
+      toast.error('Você precisa estar autenticado para cadastrar um cliente', {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+      return;
+    }
+
+    try {
+      const clienteRef = doc(db, 'cliente', formData.cpfcnpj);
+      await setDoc(clienteRef, formData);
+      toast.success('Sucesso ao cadastrar o Cliente!', {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Erro ao salvar cliente: ', error);
+      toast.error('Erro ao cadastrar o Cliente!', {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+    }
   };
 
   return (
@@ -46,124 +113,139 @@ const NovoCliente = () => {
                   type="button"
                   className="text-white bg-gray-500 hover:bg-gray-600 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                 >
-                  <span sx={sronly}>X</span>
+                  <span>X</span>
                 </button>
               </div>
+
               {/* NovoCliente body */}
-              <form className="p-4 md:p-5">
+              <form className="p-4 md:p-5" onSubmit={handleSubmit}>
                 <div className="grid gap-4 mb-4 grid-cols-2">
                   <div className="col-span-2">
-                    <label
-                      htmlFor="name"
-                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                    >
+                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                       Nome Completo
                     </label>
                     <input
                       type="text"
-                      name="name"
-                      id="name"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      name="nome"
+                      value={formData.nome}
+                      onChange={handleInputChange}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
                       placeholder="Digite seu nome completo"
                       required
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
-                    <label
-                      htmlFor="cpf"
-                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                      CPF / CNPJ
+                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      CPF/CNPJ
                     </label>
                     <input
                       type="text"
-                      name="cpf"
-                      id="cpf"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Digite seu CPF"
+                      name="cpfcnpj"
+                      value={formData.cpfcnpj}
+                      onChange={handleInputChange}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                      placeholder="Digite o CPF/CNPJ"
                       required
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
-                    <label
-                      htmlFor="car"
-                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                    >
+                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                       Carro
                     </label>
                     <input
                       type="text"
-                      name="car"
-                      id="car"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      name="carro"
+                      value={formData.carro}
+                      onChange={handleInputChange}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
                       placeholder="Digite o modelo do carro"
-                      required
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
-                    <label
-                      htmlFor="dob"
-                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                    >
+                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                       Data de Nascimento
                     </label>
                     <input
                       type="date"
-                      name="dob"
-                      id="dob"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      required
+                      name="dataNascimento"
+                      value={formData.dataNascimento}
+                      onChange={handleInputChange}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
-                    <label
-                      htmlFor="city"
-                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                    >
+                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                       Cidade
                     </label>
                     <input
                       type="text"
-                      name="city"
-                      id="city"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      name="cidade"
+                      value={formData.cidade}
+                      onChange={handleInputChange}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
                       placeholder="Digite sua cidade"
                       required
                     />
                   </div>
                   <div className="col-span-2">
-                    <label
-                      htmlFor="phone"
-                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                      Telefone
+                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Endereço, nº
+                    </label>
+                    <input
+                      type="text"
+                      name="endereco"
+                      value={formData.endereco}
+                      onChange={handleInputChange}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                      placeholder="Digite o endereço"
+                      required
+                    />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Placa do Carro
+                    </label>
+                    <input
+                      type="text"
+                      name="placa"
+                      value={formData.placa}
+                      onChange={handleInputChange}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                      placeholder="Digite a placa do carro"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Telefone 1
                     </label>
                     <input
                       type="tel"
-                      name="phone"
-                      id="phone"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Digite seu telefone"
+                      name="telefone1"
+                      value={formData.telefone1}
+                      onChange={handleInputChange}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                      placeholder="Digite seu telefone principal"
                       required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Telefone 2 (opcional)
+                    </label>
+                    <input
+                      type="tel"
+                      name="telefone2"
+                      value={formData.telefone2}
+                      onChange={handleInputChange}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                      placeholder="Digite seu telefone secundário"
                     />
                   </div>
                 </div>
                 <button
                   type="submit"
-                  className="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                  className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                 >
-                  <svg
-                    className="me-1 -ms-1 w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
                   Cadastrar Cliente
                 </button>
               </form>
@@ -171,6 +253,19 @@ const NovoCliente = () => {
           </div>
         </div>
       )}
+
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="colored"
+        transition={Bounce}
+        closeButton={false}
+      />
     </>
   );
 };
