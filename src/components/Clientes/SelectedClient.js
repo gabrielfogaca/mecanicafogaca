@@ -5,15 +5,21 @@ import {
   query,
   where,
   getDocs,
+  doc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import CardOrcamento from './CardOrcamento';
+import NovoCliente from './NovoCliente';
+import { toast } from 'react-toastify';
 
 const ClientCard = ({ client }) => {
   const [selectedOrcamento, setSelectedOrcamento] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [orcamentos, setOrcamentos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   // Configuração do Firebase
   const db = getFirestore();
@@ -68,6 +74,35 @@ const ClientCard = ({ client }) => {
     setSelectedOrcamento(null);
   };
 
+  // Função para abrir o modo de edição
+  const handleEditClient = () => {
+    setIsEditing(true);
+  };
+
+  // Função para abrir a confirmação de exclusão
+  const handleDeleteClient = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  // Função para confirmar exclusão do cliente
+  const confirmDeleteClient = async () => {
+    try {
+      await deleteDoc(doc(db, 'cliente', client.id));
+      toast.success('Cliente excluído com sucesso!');
+      // Adicione aqui a lógica para atualizar a lista de clientes se necessário
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error);
+      toast.error('Erro ao excluir cliente.');
+    } finally {
+      setShowDeleteConfirmation(false);
+    }
+  };
+
+  // Função para cancelar exclusão
+  const cancelDeleteClient = () => {
+    setShowDeleteConfirmation(false);
+  };
+
   if (!client) {
     return (
       <div role="status" className="flex items-start justify-center h-screen">
@@ -84,132 +119,163 @@ const ClientCard = ({ client }) => {
 
   return (
     <div className="max-w-sm mx-auto p-6 border border-gray-200 rounded-lg shadow-lg bg-white dark:bg-gray-800 dark:border-gray-700">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-        Detalhes do Cliente
-      </h2>
-
-      <div className="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
-        <svg
-          className="absolute w-12 h-12 text-gray-400 -left-1"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fillRule="evenodd"
-            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-            clipRule="evenodd"
-          ></path>
-        </svg>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          Detalhes do Cliente
+        </h2>
+        <div className="space-x-2">
+          <button
+            onClick={handleEditClient}
+            className="px-3 py-1 text-sm font-medium text-white bg-green-500 rounded hover:bg-green-600 dark:bg-green-700 dark:hover:bg-green-800"
+          >
+            Editar
+          </button>
+          <button
+            onClick={handleDeleteClient}
+            className="px-3 py-1 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800"
+          >
+            Excluir
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Nome Completo
-          </h3>
-          <p className="text-gray-900 dark:text-gray-100">
-            {client.nome || 'Não disponível'}
-          </p>
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            CPF/CNPJ
-          </h3>
-          <p className="text-gray-900 dark:text-gray-100">
-            {client.cpfcnpj || 'Não disponível'}
-          </p>
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Carro
-          </h3>
-          <p className="text-gray-900 dark:text-gray-100">
-            {client.carro || 'Não disponível'}
-          </p>
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Placa
-          </h3>
-          <p className="text-gray-900 dark:text-gray-100">
-            {client.placa || 'Não disponível'}
-          </p>
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Data de Nascimento
-          </h3>
-          <p className="text-gray-900 dark:text-gray-100">
-            {client.dataNascimento || 'Não disponível'}
-          </p>
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Cidade
-          </h3>
-          <p className="text-gray-900 dark:text-gray-100">
-            {client.cidade || 'Não disponível'}
-          </p>
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Telefone 1
-          </h3>
-          <p className="text-gray-900 dark:text-gray-100">
-            {client.telefone1 || 'Não disponível'}
-          </p>
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Telefone 2
-          </h3>
-          <p className="text-gray-900 dark:text-gray-100">
-            {client.telefone2 || 'Não disponível'}
-          </p>
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Orçamentos
-          </h3>
-          {loading ? (
-            <p>Carregando orçamentos...</p>
-          ) : (
-            <ul className="list-disc pl-5 text-gray-900 dark:text-gray-100">
-              {orcamentos.length > 0 ? (
-                orcamentos.map((orcamento) => (
-                  <li key={orcamento.id}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-semibold">Valor: </span>
-                        {orcamento.ValorAvista} -
-                        <span className="font-semibold"> Data: </span>
-                        {orcamento.dataOrcamento}
-                        <button
-                          onClick={() => handleOrcamentoClick(orcamento.id)}
-                          className="text-white bg-blue-500 rounded hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 w-80"
-                        >
-                          Visualizar Orçamento / Pedido
-                        </button>
+      {isEditing ? (
+        <NovoCliente cliente={client} onClose={() => setIsEditing(false)} />
+      ) : (
+        <div className="space-y-4">
+          {/* Detalhes do Cliente */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Nome Completo
+            </h3>
+            <p className="text-gray-900 dark:text-gray-100">
+              {client.nome || 'Não disponível'}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              CPF/CNPJ
+            </h3>
+            <p className="text-gray-900 dark:text-gray-100">
+              {client.cpfcnpj || 'Não disponível'}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Carro
+            </h3>
+            <p className="text-gray-900 dark:text-gray-100">
+              {client.carro || 'Não disponível'}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Placa
+            </h3>
+            <p className="text-gray-900 dark:text-gray-100">
+              {client.placa || 'Não disponível'}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Data de Nascimento
+            </h3>
+            <p className="text-gray-900 dark:text-gray-100">
+              {client.dataNascimento || 'Não disponível'}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Cidade
+            </h3>
+            <p className="text-gray-900 dark:text-gray-100">
+              {client.cidade || 'Não disponível'}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Telefone 1
+            </h3>
+            <p className="text-gray-900 dark:text-gray-100">
+              {client.telefone1 || 'Não disponível'}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Telefone 2
+            </h3>
+            <p className="text-gray-900 dark:text-gray-100">
+              {client.telefone2 || 'Não disponível'}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Orçamentos
+            </h3>
+            {loading ? (
+              <p>Carregando orçamentos...</p>
+            ) : (
+              <ul className="list-disc pl-5 text-gray-900 dark:text-gray-100">
+                {orcamentos.length > 0 ? (
+                  orcamentos.map((orcamento) => (
+                    <li key={orcamento.id}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-semibold">Valor: </span>
+                          {orcamento.ValorAvista} -
+                          <span className="font-semibold"> Data: </span>
+                          {orcamento.dataOrcamento}
+                          <button
+                            onClick={() => handleOrcamentoClick(orcamento.id)}
+                            className="ml-2 text-white bg-blue-500 rounded hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800"
+                          >
+                            Visualizar Orçamento / Pedido
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))
-              ) : (
-                <li>Não disponível</li>
-              )}
-            </ul>
+                    </li>
+                  ))
+                ) : (
+                  <li>Não disponível</li>
+                )}
+              </ul>
+            )}
+          </div>
+
+          {/* Modal de Orçamento */}
+          {showModal && selectedOrcamento && (
+            <CardOrcamento
+              orcamento={selectedOrcamento}
+              onClose={handleCloseModal}
+            />
+          )}
+
+          {/* Modal de Confirmação de Exclusão */}
+          {showDeleteConfirmation && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="p-6 bg-white rounded-lg shadow-lg dark:bg-gray-800">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Deseja realmente excluir este cliente?
+                </h3>
+                <div className="flex justify-end mt-4 space-x-2">
+                  <button
+                    onClick={confirmDeleteClient}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800"
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    onClick={cancelDeleteClient}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:bg-gray-600 dark:hover:bg-gray-700"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
-
-        {/* Modal */}
-        {showModal && selectedOrcamento && (
-          <CardOrcamento
-            orcamento={selectedOrcamento}
-            onClose={handleCloseModal}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 };
