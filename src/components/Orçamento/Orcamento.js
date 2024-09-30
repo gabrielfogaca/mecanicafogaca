@@ -11,7 +11,14 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import { db } from '../../firebase/firebase';
-import { collection, onSnapshot, addDoc } from 'firebase/firestore';
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  doc,
+  updateDoc,
+  getDoc,
+} from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -106,7 +113,6 @@ function Orcamento() {
   };
 
   const handleAddPeca = () => {
-    // Check if there's any incomplete piece before adding a new one
     if (selectedPecas.some((peca) => !peca.nome || !peca.uid)) {
       toast.error('Por favor, selecione uma peça antes de adicionar outra.', {
         position: 'top-center',
@@ -154,7 +160,6 @@ function Orcamento() {
       return;
     }
 
-    // Check if all pieces have been selected correctly
     const incompletePecas = selectedPecas.filter((peca) => !peca.uid);
     if (incompletePecas.length > 0) {
       toast.error(
@@ -174,18 +179,74 @@ function Orcamento() {
       return;
     }
 
-    // Calculate total values
+    // Se for pedido, verificar o estoque
+    if (tipo === 0) {
+      // Tipo 0 é Pedido
+      for (const peca of selectedPecas) {
+        const pecaDocRef = doc(db, 'peca', peca.uid);
+        const pecaDocSnap = await getDoc(pecaDocRef);
+
+        if (pecaDocSnap.exists()) {
+          const pecaData = pecaDocSnap.data();
+          if (pecaData.estoque < peca.quantidade) {
+            toast.error(
+              `Estoque insuficiente para a peça: ${peca.nome}. Quantidade disponível: ${pecaData.estoque}`,
+              {
+                position: 'top-center',
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: 'colored',
+                transition: Bounce,
+              },
+            );
+            return; // Interromper se o estoque não for suficiente
+          }
+        }
+      }
+
+      // Se todas as peças tiverem estoque suficiente, criar o pedido e diminuir o estoque
+      for (const peca of selectedPecas) {
+        const pecaDocRef = doc(db, 'peca', peca.uid);
+        const pecaDocSnap = await getDoc(pecaDocRef);
+        const novaQuantidade = pecaDocSnap.data().estoque - peca.quantidade;
+
+        await updateDoc(pecaDocRef, {
+          estoque: novaQuantidade,
+        });
+      }
+
+      toast.success('Pedido gerado e estoque atualizado com sucesso!', {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+        transition: Bounce,
+      });
+    }
+
+    // Se for orçamento ou pedido (após verificar o estoque), salvar no banco de dados
     const valorParcelado = selectedPecas.reduce((acc, peca) => {
-      const precoUnitario = (peca.precoCompra || 0) + (peca.precoFrete || 0);
+      const precoCompra = Number(peca.precoCompra) || 0;
+      const precoFrete = Number(peca.precoFrete) || 0;
+      const precoUnitario = precoCompra + precoFrete;
       return acc + precoUnitario * 1.45 * (peca.quantidade || 1);
     }, 0);
 
     const valorAvista = selectedPecas.reduce((acc, peca) => {
-      const precoUnitario = (peca.precoCompra || 0) + (peca.precoFrete || 0);
-      return acc + precoUnitario * 1.25 * (peca.quantidade || 1);
+      const precoCompra = Number(peca.precoCompra) || 0;
+      const precoFrete = Number(peca.precoFrete) || 0;
+      const precoUnitario = precoCompra + precoFrete;
+      return acc + precoUnitario * 1.2 * (peca.quantidade || 1);
     }, 0);
 
-    // Prepare data to save
     const orcamentoData = {
       ValorAvista: parseFloat(valorAvista.toFixed(2)),
       ValorParcelado: parseFloat(valorParcelado.toFixed(2)),
@@ -197,18 +258,12 @@ function Orcamento() {
       nome: selectedClient.nome,
       placa: selectedClient.placa || '',
       telefone1: selectedClient.telefone1 || '',
-      tipo: tipo, // Set according to selection
+      tipo: tipo, // Define se é Orçamento ou Pedido
       uidUser: selectedClient.cpfcnpj,
       pecas: {},
     };
 
-    // Add piece details to 'pecas' field
     selectedPecas.forEach((peca, index) => {
-      if (!peca || !peca.uid) {
-        console.error(`Peça na posição ${index} é inválida:`, peca);
-        return;
-      }
-      // Add piece details as an object with properties
       orcamentoData.pecas[`peca${index + 1}`] = {
         uid: peca.uid,
         nome: peca.nome,
@@ -218,12 +273,6 @@ function Orcamento() {
       };
     });
 
-    // Log the data
-    console.log('Selected Client:', selectedClient);
-    console.log('Selected Pecas:', selectedPecas);
-    console.log('Orcamento Data:', orcamentoData);
-
-    // Send to Firestore
     try {
       await addDoc(collection(db, 'orcamento'), orcamentoData);
       toast.success('Orçamento/Pedido salvo com sucesso!', {
@@ -237,10 +286,9 @@ function Orcamento() {
         theme: 'colored',
         transition: Bounce,
       });
-      // Clear the form fields
       setSelectedClient('');
       setSelectedPecas([]);
-      setTipo(1); // Reset to "Orçamento"
+      setTipo(1); // Resetar para "Orçamento"
     } catch (error) {
       console.error('Erro ao salvar o orçamento/pedido:', error);
       toast.error('Ocorreu um erro ao salvar o orçamento/pedido.', {
@@ -430,7 +478,9 @@ function Orcamento() {
                   {peca.precoCompra !== undefined &&
                   peca.precoFrete !== undefined
                     ? `R$ ${(
-                        (peca.precoCompra || 0) + (peca.precoFrete || 0)
+                        (Number(peca.precoCompra || 0) +
+                          Number(peca.precoFrete || 0)) *
+                        1.2
                       ).toFixed(2)}`
                     : ''}
                 </td>
@@ -439,8 +489,10 @@ function Orcamento() {
                   peca.precoFrete !== undefined &&
                   peca.quantidade
                     ? `R$ ${(
-                        ((peca.precoCompra || 0) + (peca.precoFrete || 0)) *
-                        peca.quantidade
+                        (Number(peca.precoCompra || 0) +
+                          Number(peca.precoFrete || 0)) *
+                        1.2 *
+                        Number(peca.quantidade)
                       ).toFixed(2)}`
                     : ''}
                 </td>
@@ -482,8 +534,10 @@ function Orcamento() {
                 {selectedPecas
                   .reduce((acc, peca) => {
                     const precoUnitario =
-                      (peca.precoCompra || 0) + (peca.precoFrete || 0);
-                    return acc + precoUnitario * 1.45 * (peca.quantidade || 1);
+                      (Number(peca.precoCompra || 0) +
+                        Number(peca.precoFrete || 0)) *
+                      1.45;
+                    return acc + precoUnitario * (peca.quantidade || 1);
                   }, 0)
                   .toFixed(2)}{' '}
                 em até 10X SEM JUROS
@@ -495,8 +549,10 @@ function Orcamento() {
                 {selectedPecas
                   .reduce((acc, peca) => {
                     const precoUnitario =
-                      (peca.precoCompra || 0) + (peca.precoFrete || 0);
-                    return acc + precoUnitario * 1.25 * (peca.quantidade || 1);
+                      (Number(peca.precoCompra || 0) +
+                        Number(peca.precoFrete || 0)) *
+                      1.2;
+                    return acc + precoUnitario * (peca.quantidade || 1);
                   }, 0)
                   .toFixed(2)}
               </p>

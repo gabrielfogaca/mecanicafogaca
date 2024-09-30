@@ -4,10 +4,13 @@ import { db } from '../../firebase/firebase'; // Conexão com o Firestore
 import { doc, setDoc } from 'firebase/firestore'; // Funções do Firestore para adicionar/editar documentos
 import { ToastContainer, toast, Bounce } from 'react-toastify'; // Biblioteca de notificações
 import 'react-toastify/dist/ReactToastify.css'; // Estilos para o Toastify
+import { v4 as uuidv4 } from 'uuid'; // Importar função para gerar UUID
 
 const NovoCliente = ({ cliente, onClose }) => {
   // Estado para gerenciar os dados do formulário
+  const uid = uuidv4();
   const [formData, setFormData] = useState({
+    uid,
     nome: '',
     cpfcnpj: '',
     carro: '',
@@ -59,8 +62,8 @@ const NovoCliente = ({ cliente, onClose }) => {
     }
 
     try {
-      // Referência ao documento do cliente no Firestore
-      const clienteRef = doc(db, 'cliente', formData.cpfcnpj);
+      // Referência ao documento do cliente no Firestore usando o UID como identificador
+      const clienteRef = doc(db, 'cliente', formData.uid);
 
       // Salva os dados do cliente no Firestore
       await setDoc(clienteRef, formData);
@@ -158,7 +161,6 @@ const NovoCliente = ({ cliente, onClose }) => {
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
                   placeholder="Digite o CPF/CNPJ"
                   required
-                  disabled={!!cliente} // Desabilita o campo CPF/CNPJ durante edição
                 />
               </div>
               <div className="col-span-2 sm:col-span-1">

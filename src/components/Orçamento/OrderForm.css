@@ -45,11 +45,16 @@ body {
   border-radius: 15px;
 }
 
+
 .main th, .main td {
   padding: 8px;
   text-align: left;
   border-radius: 15px;
 }
+
+.main input{
+  width: 50px !important;
+} 
 
 .client-details, .footer {
   border: 1px solid black; /* Adiciona borda à seção de dados do cliente e valor final */

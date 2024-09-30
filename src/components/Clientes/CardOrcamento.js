@@ -113,20 +113,22 @@ const CardOrcamento = ({ orcamento, onClose }) => {
                       <td>{peca.quantidade}</td>
                       <td>{peca.nome || 'Peça não especificada'}</td>
                       <td>
-                        {peca.precoCompra !== undefined &&
-                        peca.precoFrete !== undefined
-                          ? `R$ ${(peca.precoCompra + peca.precoFrete).toFixed(
-                              2,
-                            )}`
-                          : 'N/A'}
+                        {(
+                          (Number(peca.precoCompra || 0) +
+                            Number(peca.precoFrete || 0)) *
+                          1.2 *
+                          Number(peca.quantidade)
+                        ).toFixed(2)}
                       </td>
                       <td>
                         {peca.precoCompra !== undefined &&
                         peca.precoFrete !== undefined &&
                         peca.quantidade
                           ? `R$ ${(
-                              (peca.precoCompra + peca.precoFrete) *
-                              peca.quantidade
+                              (Number(peca.precoCompra) +
+                                Number(peca.precoFrete)) *
+                              1.2 *
+                              Number(peca.quantidade)
                             ).toFixed(2)}`
                           : 'N/A'}
                       </td>
