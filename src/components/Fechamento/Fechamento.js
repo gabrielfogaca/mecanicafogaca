@@ -12,7 +12,6 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Timestamp } from 'firebase/firestore';
 
 ChartJS.register(
   CategoryScale,
@@ -26,72 +25,65 @@ ChartJS.register(
 function Fechamento() {
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
-  const [compras, setCompras] = useState(0); // Total de compras de peças
-  const [despesas, setDespesas] = useState(0); // Total de despesas adicionais
-  const [vendas, setVendas] = useState(0); // Total de vendas (Pedidos)
+  const [compras, setCompras] = useState(0);
+  const [despesas, setDespesas] = useState(0);
+  const [vendas, setVendas] = useState(0);
   const [dataFetched, setDataFetched] = useState(false);
 
   const fetchData = async (month, year) => {
+    console.log('Iniciando fetchData com mês:', month, 'e ano:', year);
+
     if (dataFetched || !month || !year) return;
 
     try {
-      // Compra de Peças
-      const pecasQuery = query(collection(db, 'peca'));
-      const pecasSnapshot = await getDocs(pecasQuery);
-      const totalCompras = pecasSnapshot.docs.reduce((acc, doc) => {
-        const peca = doc.data();
-        const dataDoCadastro = peca.dataDoCadastro;
-        if (dataDoCadastro) {
-          const [dia, mes, ano] = dataDoCadastro.split('/').map(Number);
-          if (mes === month && ano === year) {
-            return (
-              acc + Number(peca.precoCompra || 0) + Number(peca.precoFrete || 0)
-            );
-          }
-        }
-        return acc;
-      }, 0);
-      setCompras(totalCompras);
-
-      // Despesas adicionais
       const despesasQuery = query(collection(db, 'despesa'));
       const despesasSnapshot = await getDocs(despesasQuery);
-      const totalDespesas = despesasSnapshot.docs.reduce((acc, doc) => {
+      let totalCompras = 0;
+      let totalDespesas = 0;
+
+      despesasSnapshot.docs.forEach((doc) => {
         const despesa = doc.data();
-        const dataDespesa = despesa.dataDespesa;
+        const dataDespesa = despesa.data;
+
         if (dataDespesa) {
-          const [dia, mes, ano] = dataDespesa.split('/').map(Number);
-          if (mes === month && ano === year) {
-            return acc + Number(despesa.valorDespesa || 0);
+          const [despYear, despMonth] = dataDespesa.split('-').map(Number);
+
+          if (despMonth === month && despYear === year) {
+            const valorDespesa = Number(despesa.valor) || 0;
+
+            if (despesa.tipo === 'CompraDePeças') {
+              totalCompras += valorDespesa;
+            } else if (despesa.tipo === 'DespesasGerais') {
+              totalDespesas += valorDespesa;
+            }
           }
         }
-        return acc;
-      }, 0);
+      });
+
+      setCompras(totalCompras);
       setDespesas(totalDespesas);
 
-      // Pedidos (orcamentos com tipo diferente de 0)
-      const startDate = new Timestamp(
-        new Date(year, month - 1, 1).getTime() / 1000,
-        0,
-      );
-      const endDate = new Timestamp(
-        new Date(year, month, 0, 23, 59, 59).getTime() / 1000,
-        0,
+      // Pedidos (orçamentos com tipo igual a 0)
+      const pedidosSnapshot = await getDocs(
+        query(collection(db, 'orcamento'), where('tipo', '==', 0)),
       );
 
-      const pedidosQuery = query(
-        collection(db, 'orcamento'),
-        where('tipo', '!=', 0),
-        where('dataOrcamento', '>=', startDate),
-        where('dataOrcamento', '<=', endDate),
-      );
-      const pedidosSnapshot = await getDocs(pedidosQuery);
-      const totalVendas = pedidosSnapshot.docs.reduce((acc, doc) => {
-        const pedido = doc.data();
+      const orcamentos = pedidosSnapshot.docs
+        .map((doc) => {
+          const dataOrcamento = doc.data().dataOrcamento;
+          const [dia, mes, ano] = dataOrcamento.split('/').map(Number);
+
+          return { ...doc.data(), dia, mes, ano };
+        })
+        .filter(
+          (orcamento) => orcamento.mes === month && orcamento.ano === year,
+        );
+
+      const totalVendas = orcamentos.reduce((acc, pedido) => {
         return acc + Number(pedido.ValorAvista || 0);
       }, 0);
-      setVendas(totalVendas);
 
+      setVendas(totalVendas);
       setDataFetched(true);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
@@ -109,6 +101,10 @@ function Fechamento() {
     setSelectedYear(year);
     setDataFetched(false);
   };
+
+  const totalDespesas = despesas + compras; // Valor total de despesas (X)
+  const totalPedidos = vendas; // Valor total de pedidos (Y)
+  const resultadoFinal = totalPedidos - totalDespesas; // Resultado final do mês (Z)
 
   const data = {
     labels: ['Compra de Peças', 'Despesas', 'Pedidos'],
@@ -140,16 +136,38 @@ function Fechamento() {
   };
 
   return (
-    <div>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+      }}
+    >
       <h1>Fechamento</h1>
       <DateSelect onDateSelect={handleDateSelect} />
-      <p>Escolha o mês e ano para visualizar o fechamento.</p>
       <div style={{ width: '500px', height: '300px' }}>
         {compras > 0 || despesas > 0 || vendas > 0 ? (
           <Bar options={options} data={data} />
         ) : (
           <p>Selecione um mês e ano para visualizar os dados.</p>
         )}
+      </div>
+      <div>
+        <p>
+          Valor total de Despesas:
+          <span style={{ color: 'red' }}> R$ {totalDespesas.toFixed(2)}</span>
+        </p>
+        <p>
+          Valor total de Pedidos:
+          <span style={{ color: 'green' }}> R$ {totalPedidos.toFixed(2)}</span>
+        </p>
+        <p>
+          Resultado final do mês:
+          <span style={{ color: resultadoFinal >= 0 ? 'green' : 'red' }}>
+            R$ {resultadoFinal.toFixed(2)}
+          </span>
+        </p>
       </div>
     </div>
   );

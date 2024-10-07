@@ -12,7 +12,7 @@ const NovaDespesas = ({ onClose }) => {
     uid: uuidv4(),
     informacao: '',
     valor: '',
-    tipo: 'Despesas Gerais',
+    tipo: 'DespesasGerais',
     data: '',
   });
 

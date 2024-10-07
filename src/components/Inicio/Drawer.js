@@ -140,6 +140,20 @@ const modalStyleOrçamento = {
   overflowY: 'auto',
 };
 
+const modalStyleDespesas = {
+  position: 'absolute',
+  top: '10%',
+  left: '30rem',
+  right: '4rem',
+  width: 'calc(100% - 60rem)',
+  maxHeight: '80%',
+  bgcolor: ' #fff',
+  borderRadius: '15px',
+  boxShadow: 24,
+  p: 4,
+  overflowY: 'auto',
+};
+
 export default function MiniDrawer() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
@@ -279,7 +293,7 @@ export default function MiniDrawer() {
           aria-labelledby="modal-fechamento"
           aria-describedby="modal-fechamento-description"
         >
-          <Box sx={modalStyle}>
+          <Box sx={modalStyleDespesas}>
             <Fechamento />
           </Box>
         </Modal>
@@ -301,7 +315,7 @@ export default function MiniDrawer() {
           aria-labelledby="modal-Despesas"
           aria-describedby="modal-Despesas-description"
         >
-          <Box sx={modalStyleOrçamento}>
+          <Box sx={modalStyle}>
             <Despesas />
           </Box>
         </Modal>
