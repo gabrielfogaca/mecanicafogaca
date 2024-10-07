@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../../firebase/firebase'; // Importando o Firestore configurado
-import DateSelect from './DateSelect'; // Importando o componente DateSelect
+import { db } from '../../firebase/firebase';
+import DateSelect from './DateSelect';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -12,9 +12,8 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Timestamp } from 'firebase/firestore'; // Importando o Timestamp para trabalhar com datas
+import { Timestamp } from 'firebase/firestore';
 
-// Registrar os componentes do Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -27,26 +26,24 @@ ChartJS.register(
 function Fechamento() {
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
-  const [despesas, setDespesas] = useState(0); // Total de despesas (Peças)
-  const [vendas, setVendas] = useState(0); // Total de vendas (Orçamentos do tipo 0)
-  const [dataFetched, setDataFetched] = useState(false); // Estado para evitar múltiplas chamadas
+  const [compras, setCompras] = useState(0); // Total de compras de peças
+  const [despesas, setDespesas] = useState(0); // Total de despesas adicionais
+  const [vendas, setVendas] = useState(0); // Total de vendas (Pedidos)
+  const [dataFetched, setDataFetched] = useState(false);
 
   const fetchData = async (month, year) => {
     if (dataFetched || !month || !year) return;
 
     try {
-      // Buscar peças (Despesas)
+      // Compra de Peças
       const pecasQuery = query(collection(db, 'peca'));
       const pecasSnapshot = await getDocs(pecasQuery);
-      const totalDespesas = pecasSnapshot.docs.reduce((acc, doc) => {
+      const totalCompras = pecasSnapshot.docs.reduce((acc, doc) => {
         const peca = doc.data();
-
-        // Verificar se a peça foi cadastrada no mês e ano selecionados
         const dataDoCadastro = peca.dataDoCadastro;
         if (dataDoCadastro) {
           const [dia, mes, ano] = dataDoCadastro.split('/').map(Number);
           if (mes === month && ano === year) {
-            // Somar o preço de compra e frete das peças cadastradas nesse mês/ano
             return (
               acc + Number(peca.precoCompra || 0) + Number(peca.precoFrete || 0)
             );
@@ -54,9 +51,25 @@ function Fechamento() {
         }
         return acc;
       }, 0);
+      setCompras(totalCompras);
+
+      // Despesas adicionais
+      const despesasQuery = query(collection(db, 'despesa'));
+      const despesasSnapshot = await getDocs(despesasQuery);
+      const totalDespesas = despesasSnapshot.docs.reduce((acc, doc) => {
+        const despesa = doc.data();
+        const dataDespesa = despesa.dataDespesa;
+        if (dataDespesa) {
+          const [dia, mes, ano] = dataDespesa.split('/').map(Number);
+          if (mes === month && ano === year) {
+            return acc + Number(despesa.valorDespesa || 0);
+          }
+        }
+        return acc;
+      }, 0);
       setDespesas(totalDespesas);
 
-      // Verificar o início e o fim do mês selecionado
+      // Pedidos (orcamentos com tipo diferente de 0)
       const startDate = new Timestamp(
         new Date(year, month - 1, 1).getTime() / 1000,
         0,
@@ -66,21 +79,20 @@ function Fechamento() {
         0,
       );
 
-      // Buscar orçamentos do tipo 0 (Vendas) entre as datas selecionadas
-      const orcamentosQuery = query(
+      const pedidosQuery = query(
         collection(db, 'orcamento'),
-        where('tipo', '==', 0),
+        where('tipo', '!=', 0),
         where('dataOrcamento', '>=', startDate),
         where('dataOrcamento', '<=', endDate),
       );
-      const orcamentosSnapshot = await getDocs(orcamentosQuery);
-      const totalVendas = orcamentosSnapshot.docs.reduce((acc, doc) => {
-        const orcamento = doc.data();
-        return acc + Number(orcamento.ValorAvista || 0);
+      const pedidosSnapshot = await getDocs(pedidosQuery);
+      const totalVendas = pedidosSnapshot.docs.reduce((acc, doc) => {
+        const pedido = doc.data();
+        return acc + Number(pedido.ValorAvista || 0);
       }, 0);
       setVendas(totalVendas);
 
-      setDataFetched(true); // Marca que os dados foram buscados
+      setDataFetched(true);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     }
@@ -95,24 +107,27 @@ function Fechamento() {
   const handleDateSelect = (month, year) => {
     setSelectedMonth(month);
     setSelectedYear(year);
-    setDataFetched(false); // Resetar o estado para buscar novos dados
+    setDataFetched(false);
   };
 
-  // Configuração do gráfico de barras
   const data = {
-    labels: ['Despesas', 'Vendas'],
+    labels: ['Compra de Peças', 'Despesas', 'Pedidos'],
     datasets: [
       {
         label: 'R$',
-        data: [despesas, vendas],
-        backgroundColor: ['rgba(255, 99, 132, 0.5)', 'rgba(54, 162, 235, 0.5)'],
+        data: [compras, despesas, vendas],
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.5)',
+          'rgba(255, 206, 86, 0.5)',
+          'rgba(54, 162, 235, 0.5)',
+        ],
       },
     ],
   };
 
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // Permite ajustar a altura e largura manualmente
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
@@ -127,15 +142,10 @@ function Fechamento() {
   return (
     <div>
       <h1>Fechamento</h1>
-
-      {/* Insere o DateSelect para escolher mês e ano */}
       <DateSelect onDateSelect={handleDateSelect} />
-
       <p>Escolha o mês e ano para visualizar o fechamento.</p>
-
-      {/* Renderiza o gráfico de barras com tamanho ajustado */}
       <div style={{ width: '500px', height: '300px' }}>
-        {despesas > 0 || vendas > 0 ? (
+        {compras > 0 || despesas > 0 || vendas > 0 ? (
           <Bar options={options} data={data} />
         ) : (
           <p>Selecione um mês e ano para visualizar os dados.</p>

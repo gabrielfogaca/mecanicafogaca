@@ -203,7 +203,7 @@ const NovoCliente = ({ cliente, onClose }) => {
                 />
               </div>
               <div className="col-span-2">
-                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
                   Endereço, nº
                 </label>
                 <input
@@ -217,7 +217,7 @@ const NovoCliente = ({ cliente, onClose }) => {
                 />
               </div>
               <div className="col-span-2 sm:col-span-1">
-                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
                   Placa do Carro
                 </label>
                 <input
@@ -229,8 +229,8 @@ const NovoCliente = ({ cliente, onClose }) => {
                   placeholder="Digite a placa do carro"
                 />
               </div>
-              <div className="col-span-2">
-                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+              <div className="col-span-2 sm:col-span-1">
+                <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
                   Telefone 1
                 </label>
                 <input
@@ -244,7 +244,7 @@ const NovoCliente = ({ cliente, onClose }) => {
                 />
               </div>
               <div className="col-span-2">
-                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
                   Telefone 2 (opcional)
                 </label>
                 <input

@@ -27,6 +27,8 @@ import Clientes from '../Clientes/Clientes';
 import Pecas from '../Pecas/Pecas';
 import Fechamento from '../Fechamento/Fechamento';
 import Orcamento from '../Orçamento/Orcamento';
+import Despesas from '../Despesas/Despesas';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/authContext'; // Verifique a importação
 
@@ -211,22 +213,28 @@ export default function MiniDrawer() {
         </DrawerHeader>
         <Divider />
         <List>
-          {['Inicio', 'Clientes', 'Peças', 'Orçamento', 'Fechamento'].map(
-            (text, index) => (
-              <ListItem key={text} disablePadding>
-                <ListItemButton onClick={() => handleOpenModal(text)}>
-                  <ListItemIcon>
-                    {index === 0 && <HomeIcon />}
-                    {index === 1 && <AccountCircleIcon />}
-                    {index === 2 && <BuildIcon />}
-                    {index === 3 && <ReceiptIcon />}
-                    {index === 4 && <EqualizerIcon />}
-                  </ListItemIcon>
-                  <ListItemText primary={text} />
-                </ListItemButton>
-              </ListItem>
-            ),
-          )}
+          {[
+            'Inicio',
+            'Clientes',
+            'Peças',
+            'Orçamento',
+            'Fechamento',
+            'Despesas',
+          ].map((text, index) => (
+            <ListItem key={text} disablePadding>
+              <ListItemButton onClick={() => handleOpenModal(text)}>
+                <ListItemIcon>
+                  {index === 0 && <HomeIcon />}
+                  {index === 1 && <AccountCircleIcon />}
+                  {index === 2 && <BuildIcon />}
+                  {index === 3 && <ReceiptIcon />}
+                  {index === 4 && <EqualizerIcon />}
+                  {index === 5 && <AddShoppingCartIcon />}
+                </ListItemIcon>
+                <ListItemText primary={text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
         </List>
         <Divider />
         <List>
@@ -284,6 +292,17 @@ export default function MiniDrawer() {
         >
           <Box sx={modalStyleOrçamento}>
             <Orcamento />
+          </Box>
+        </Modal>
+
+        <Modal
+          open={openModal === 'Despesas'}
+          onClose={handleCloseModal}
+          aria-labelledby="modal-Despesas"
+          aria-describedby="modal-Despesas-description"
+        >
+          <Box sx={modalStyleOrçamento}>
+            <Despesas />
           </Box>
         </Modal>
       </Box>
