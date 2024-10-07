@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/authContext';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import DateSelect from './DateSelect';
 
@@ -34,6 +34,17 @@ const DespesasCadastradas = () => {
       };
     }
   }, [userLoggedIn]);
+
+  const handleDelete = async (despesaId) => {
+    try {
+      await deleteDoc(doc(db, 'despesa', despesaId));
+      setDespesaData((prevData) =>
+        prevData.filter((despesa) => despesa.id !== despesaId),
+      );
+    } catch (error) {
+      console.error('Erro ao excluir despesa:', error);
+    }
+  };
 
   const filteredDespesas = despesaData.filter((despesa) => {
     const matchesSearchTerm =
@@ -89,13 +100,22 @@ const DespesasCadastradas = () => {
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              className="ml-4 px-2 py-1 text-white bg-blue-500 rounded hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 w-48 max-w-[10%]"
-              onClick={() => setSelectedDespesa(despesa)}
-            >
-              Ver Detalhes
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="px-2 py-1 text-white bg-blue-500 rounded hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800"
+                onClick={() => setSelectedDespesa(despesa)}
+              >
+                Ver Detalhes
+              </button>
+              <button
+                type="button"
+                className="px-2 py-1 text-white bg-red-500 rounded hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800"
+                onClick={() => handleDelete(despesa.id)}
+              >
+                Excluir
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -122,12 +142,10 @@ const DespesasCadastradas = () => {
           </div>
         ) : (
           <div role="status" className="flex items-start justify-center">
-            <div className="">
-              <div className="flex items-center justify-center w-96 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
-                <div className="px-3 py-1 text-xs font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">
-                  Veja os detalhes das Despesas clicando no botão "Ver
-                  Detalhes"...
-                </div>
+            <div className="w-96 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+              <div className="px-3 py-1 text-xs font-medium text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">
+                Veja os detalhes das Despesas clicando no botão "Ver
+                Detalhes"...
               </div>
             </div>
           </div>
